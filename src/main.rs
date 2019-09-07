@@ -36,7 +36,8 @@ fn main() {
     // monomorphism();
     // scans2::scan_states();
     // scans3::main();
-    maybies();
+    // maybies();
+    default::main();
 }
 
 fn specific() {
@@ -985,5 +986,20 @@ mod maybe {
         } else {
             0
         }
+    }
+}
+
+mod default {
+    struct Num {
+        x: usize
+    }
+    impl Default for Num {
+        fn default() -> Self {
+            Num{x:42}
+        }
+    }
+    pub fn main() {
+        n = Num::default();
+        assert_eq!(n.x, 42)
     }
 }
