@@ -5,6 +5,10 @@
 extern crate rand;
 
 mod docs;
+mod linked_list;
+mod scratch;
+mod sliding_log;
+
 use std::fs;
 use std::sync::mpsc;
 use std::thread;
@@ -18,7 +22,7 @@ macro_rules! s {
     };
 }
 
-fn main() {
+fn main() -> Result<(), &'static str> {
     // main1();
     // traits1();
     // scans1();
@@ -37,7 +41,12 @@ fn main() {
     // scans2::scan_states();
     // scans3::main();
     // maybies();
-    default::main();
+    // default::main();
+    // getters::main()?;
+    // linked_list::main();
+    // sliding_log::main();
+    scratch::rc();
+    Ok(())
 }
 
 fn specific() {
@@ -325,7 +334,7 @@ struct Document {
 }
 
 #[derive(Debug)]
-struct Result {
+struct DocResult {
     // url: String,
     filename: String,
     published: bool,
@@ -347,8 +356,8 @@ fn read(filename: String) -> Document {
     Document { filename, content }
 }
 
-fn process(doc: &Document) -> Result {
-    Result {
+fn process(doc: &Document) -> DocResult {
+    DocResult {
         filename: doc.filename.clone(),
         published: true,
         uses_wp: false,
@@ -991,15 +1000,59 @@ mod maybe {
 
 mod default {
     struct Num {
-        x: usize
+        x: usize,
     }
     impl Default for Num {
         fn default() -> Self {
-            Num{x:42}
+            Num { x: 42 }
         }
     }
     pub fn main() {
-        n = Num::default();
-        assert_eq!(n.x, 42)
+        let n = Num::default();
+        assert_eq!(n.x, 42);
+
+        let ns = Nums::default();
+        assert_eq!(ns.a, 0);
+        assert_eq!(ns.b, 0);
+
+        let ns = Nums {
+            a: 1,
+            ..Nums::default()
+        };
+        // let ns = Nums{a:1,..Default::default()}; // can also use Default::default
+        assert_eq!(ns.a, 1);
+        assert_eq!(ns.b, 0);
+    }
+
+    #[derive(Default)]
+    struct Nums {
+        a: usize,
+        b: i32,
+        c: f32,
+    }
+}
+
+/// Have to know to use a getter version
+mod getters {
+    #[derive(Default)]
+    struct X {
+        a: u32,
+        b: u32,
+    }
+    impl X {
+        fn b(&self) -> u32 {
+            555
+        }
+    }
+    pub fn main() -> Result<(), &'static str> {
+        let x = X {
+            a: 1,
+            ..Default::default()
+        };
+        assert_eq!(x.a, 1);
+        assert_eq!(x.b, 0);
+        assert_eq!(x.b(), 555);
+        Ok(())
+        // Err("Testing...")
     }
 }
