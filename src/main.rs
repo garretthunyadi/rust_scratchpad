@@ -5,6 +5,7 @@
 extern crate rand;
 
 mod corpus;
+mod hashing;
 mod docs;
 mod iterator;
 mod linked_list;
@@ -23,38 +24,45 @@ macro_rules! s {
     };
 }
 
-fn main() -> Result<(), String> {
-    // main1();
-    // traits1();
-    // scans1();
-    // locks1();
-    // threads1();
-    // channels1();
-    // mutex1();
-    // docs_main();
-    // iter();
-    // specific();
-    // state_machine();
-    // run_story();
-    // generics();
-    // polymorphism();
-    // monomorphism();
-    // scans2::scan_states();
-    // scans3::main();
-    // maybies();
-    // default::main();
-    // getters::main()?;
-    // linked_list::main();
-    // sliding_log::main();
-    // scratch::main();
-    // match corpus::main() {
-    //     Ok(()) => Ok(()),
-    //     Err(err) => Err(err.to_string()),
-    // }
-    corpus::main().or_else(|err| Err(err.to_string()))
-
-    // Ok(())
+// fn main() -> Result<(), String> {
+//     corpus::main().or_else(|err| Err(err.to_string()))
+// }
+fn main() -> Result<(), std::io::Error> {
+    hashing::main()
 }
+
+// fn main() {
+    // scratch::main();
+// main1();
+// traits1();
+// scans1();
+// locks1();
+// threads1();
+// channels1();
+// mutex1();
+// docs_main();
+// iter();
+// specific();
+// state_machine();
+// run_story();
+// generics();
+// polymorphism();
+// monomorphism();
+// scans2::scan_states();
+// scans3::main();
+// maybies();
+// default::main();
+// getters::main()?;
+// linked_list::main();
+// sliding_log::main();
+// iterator::main();
+// match corpus::main() {
+//     Ok(()) => Ok(()),
+//     Err(err) => Err(err.to_string()),
+// }
+// corpus::main().or_else(|err| Err(err.to_string()))
+
+// }
 
 fn specific() {
     let mut state = ASpecificStateMachine::start();
