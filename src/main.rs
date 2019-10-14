@@ -6,8 +6,8 @@ extern crate rand;
 
 mod corpus;
 mod docs;
+mod iterator;
 mod linked_list;
-mod scratch;
 mod sliding_log;
 
 use std::fs;
