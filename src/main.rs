@@ -4,6 +4,7 @@
 
 extern crate rand;
 
+mod corpus;
 mod docs;
 mod linked_list;
 mod scratch;
@@ -22,7 +23,7 @@ macro_rules! s {
     };
 }
 
-fn main() -> Result<(), &'static str> {
+fn main() -> Result<(), String> {
     // main1();
     // traits1();
     // scans1();
@@ -45,8 +46,14 @@ fn main() -> Result<(), &'static str> {
     // getters::main()?;
     // linked_list::main();
     // sliding_log::main();
-    scratch::rc();
-    Ok(())
+    // scratch::main();
+    // match corpus::main() {
+    //     Ok(()) => Ok(()),
+    //     Err(err) => Err(err.to_string()),
+    // }
+    corpus::main().or_else(|err| Err(err.to_string()))
+
+    // Ok(())
 }
 
 fn specific() {
