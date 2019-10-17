@@ -12,6 +12,14 @@ pub fn main() -> Result<()> {
     println!("MxScanResult -> {:?}", mx);
     let dns: DnsScanResult = domain.scan();
     println!("DnsScanResult -> {:?}", dns);
+
+    // let domains = vec!["google.com","bogus","bbc.com"].iter().map(|s| Domain::from_str(s)).collect::<Vec<_>>();
+    let domains = vec!["google.com", "bogus", "bbc.com"]
+        .iter()
+        .map(|s| Domain::from_str(s))
+        .filter_map(Result::ok)
+        .collect::<Vec<_>>();
+
     Ok(())
 }
 
