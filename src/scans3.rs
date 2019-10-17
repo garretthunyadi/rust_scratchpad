@@ -1,3 +1,5 @@
+type Domain = String;
+
 ///  Scan states that consume the request to produce a result
 /// ContentScan -> CoreScan
 ///  DnsScan -> ContentScan -> CoreScan
@@ -63,7 +65,7 @@ struct ContentScanResult {
 
 enum CoreScanRequest {
     Domain(String),
-    DomainAndHost(super::Domain, Host),
+    DomainAndHost(Domain, Host),
     DnsScan(DnsScanResult),
 }
 pub struct CoreScanResult {
@@ -111,19 +113,19 @@ impl Scanner<CoreScanResult> for ContentScanResult {
     }
 }
 
-fn head_scan(domain: super::Domain) -> Result<HeadScanResult, ScanError> {
+fn head_scan(domain: Domain) -> Result<HeadScanResult, ScanError> {
     Ok(HeadScanResult {
         domain,
         content_length: 44,
     })
 }
-fn content_scan(domain: super::Domain) -> Result<ContentScanResult, ScanError> {
+fn content_scan(domain: Domain) -> Result<ContentScanResult, ScanError> {
     Ok(ContentScanResult {
         domain,
         content: "This is my website.  It's <bold>pretty</bold>.".to_string(),
     })
 }
-fn core_from_content(domain: super::Domain, content: String) -> CoreScanResult {
+fn core_from_content(domain: Domain, content: String) -> CoreScanResult {
     CoreScanResult {
         domain,
         techs: vec!["wordpress".to_string()],

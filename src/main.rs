@@ -418,16 +418,16 @@ fn test_iterator() {
 
 // simulate dependent scans
 
-trait Scanner {
-    fn scan(domain: Domain) -> ScanResult;
-}
-// trait Summary {
-//     fn summarize(&self) -> String;
+// trait Scanner {
+//     fn scan(domain: Domain) -> ScanResult;
 // }
+// // trait Summary {
+// //     fn summarize(&self) -> String;
+// // }
 
-trait ScanResultTrait {
-    fn domain() -> Domain;
-}
+// trait ScanResultTrait {
+//     fn domain() -> Domain;
+// }
 
 // impl ScanResultTrait for CoreScan {
 //     // type Item = CoreScan;
@@ -441,80 +441,80 @@ trait ScanResultTrait {
 ///
 /// //////////
 
-fn scans1() {
-    let core_res = ScanResult {
-        domain: String::from("google.com"),
-        info: ScanInfo::Core {
-            uses_wordpress: true,
-        },
-    };
-    report(&core_res);
+// fn scans1() {
+//     let core_res = ScanResult {
+//         domain: String::from("google.com"),
+//         info: ScanInfo::Core {
+//             uses_wordpress: true,
+//         },
+//     };
+//     report(&core_res);
 
-    let mx_res = mx_scan(Domain::from("google.com"));
-    report(&mx_res);
+//     let mx_res = mx_scan(Domain::from("google.com"));
+//     report(&mx_res);
 
-    let results = [&core_res, &mx_res];
-    report_multi(&results);
+//     let results = [&core_res, &mx_res];
+//     report_multi(&results);
 
-    let xs = [core_res];
-    for x in xs.iter() {
-        println!("{:?}", x);
-    }
-}
-type Domain = String;
-type IP = String;
+//     let xs = [core_res];
+//     for x in xs.iter() {
+//         println!("{:?}", x);
+//     }
+// }
+// type Domain = String;
+// type IP = String;
 
-#[derive(Debug)]
-enum HostPlatform {
-    EIGBluehost,
-    EIGHostgator,
-    Google,
-    AWS,
-    GoDaddy,
-}
+// #[derive(Debug)]
+// enum HostPlatform {
+//     EIGBluehost,
+//     EIGHostgator,
+//     Google,
+//     AWS,
+//     GoDaddy,
+// }
 
-#[derive(Debug)]
-enum ScanInfo {
-    Core { uses_wordpress: bool },
-    Mx { ip: IP, host_platform: HostPlatform },
-}
+// #[derive(Debug)]
+// enum ScanInfo {
+//     Core { uses_wordpress: bool },
+//     Mx { ip: IP, host_platform: HostPlatform },
+// }
 
-#[derive(Debug)]
-enum CoreScanError {}
+// #[derive(Debug)]
+// enum CoreScanError {}
 
-#[derive(Debug)]
-enum CoreResult {
-    Error { code: CoreScanError },
-}
+// #[derive(Debug)]
+// enum CoreResult {
+//     Error { code: CoreScanError },
+// }
 
-#[derive(Debug)]
-struct ScanResult {
-    domain: String,
-    info: ScanInfo,
-}
+// #[derive(Debug)]
+// struct ScanResult {
+//     domain: String,
+//     info: ScanInfo,
+// }
 
-fn mx_scan(domain: Domain) -> ScanResult {
-    let info = ScanInfo::Mx {
-        ip: String::from(""),
-        host_platform: HostPlatform::Google,
-    };
-    ScanResult { domain, info }
-}
+// fn mx_scan(domain: Domain) -> ScanResult {
+//     let info = ScanInfo::Mx {
+//         ip: String::from(""),
+//         host_platform: HostPlatform::Google,
+//     };
+//     ScanResult { domain, info }
+// }
 
-fn report(res: &ScanResult) {
-    println!("{}", res.domain);
+// fn report(res: &ScanResult) {
+//     println!("{}", res.domain);
 
-    match res.info {
-        ScanInfo::Core { .. } => println!("core"),
-        ScanInfo::Mx { .. } => println!("mx"),
-    };
-}
+//     match res.info {
+//         ScanInfo::Core { .. } => println!("core"),
+//         ScanInfo::Mx { .. } => println!("mx"),
+//     };
+// }
 
-fn report_multi(results: &[&ScanResult]) {
-    for res in results.iter() {
-        println!(" - {}", res.domain);
-    }
-}
+// fn report_multi(results: &[&ScanResult]) {
+//     for res in results.iter() {
+//         println!(" - {}", res.domain);
+//     }
+// }
 
 trait Doer {
     fn r#do(&self) -> String {
