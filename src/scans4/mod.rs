@@ -14,22 +14,34 @@ pub fn main() -> Result<()> {
     println!("DnsScanResult -> {:?}", dns);
 
     // let domains = vec!["google.com","bogus","bbc.com"].iter().map(|s| Domain::from_str(s)).collect::<Vec<_>>();
-    let domains = vec!["google.com", "bogus", "bbc.com"]
-        .iter()
-        .map(|s| Domain::from_str(s))
-        .filter_map(Result::ok)
-        .map(|d| (d.clone(), d.scan(), d.scan()))
-        .collect::<Vec<(Domain,MxScanResult,DnsScanResult)>>();
-
+    // let domains = vec!["google.com", "bogus", "bbc.com"]
+    //     .iter()
+    //     .map(|s| Domain::from_str(s))
+    //     .filter_map(Result::ok)
+    //     .collect::<Vec<(Domain, MxScanResult, DnsScanResult)>>();
+    let domains = parse_domains(&["google.com", "bogus", "bbc.com"]);
     println!("domains: {:?}", domains);
+    let results = scan_domains(&domains);
+
+    println!("results: {:?}", results);
     Ok(())
+}
+
+fn parse_domains(ss: &[&str]) -> Vec<Domain> {
+    vec![]
+}
+fn scan_domains(domains: &[Domain]) -> Vec<(Domain, DnsScanResult, MxScanResult)> {
+    domains
+        .iter()
+        .map(|d| (d.clone(), d.scan(), d.scan()))
+        .collect::<Vec<(Domain, DnsScanResult, MxScanResult)>>()
 }
 
 pub trait Scanner<ScanResult> {
     fn scan(&self) -> ScanResult;
 }
 
-#[derive(Debug, PartialEq,Clone)]
+#[derive(Debug, PartialEq, Clone)]
 struct Domain {
     domain: String,
 }
