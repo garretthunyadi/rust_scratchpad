@@ -19,6 +19,10 @@ pub fn main() -> Result<()> {
     let results = scan_domains(&domains);
 
     println!("results: {:?}", results);
+
+    let domains_with_hosts = append_hosts(&domains);
+    let results = scan_domains_with_hosts(&domains_with_hosts);
+
     Ok(())
 }
 
@@ -34,6 +38,23 @@ fn scan_domains(domains: &[Domain]) -> Vec<(Domain, DnsScanResult, MxScanResult)
         .iter()
         .map(|d| (d.clone(), d.scan(), d.scan()))
         .collect::<Vec<(Domain, DnsScanResult, MxScanResult)>>()
+}
+
+fn append_hosts(domans: &[Domain]) -> Vec<DomainWithHost> {
+    vec![]
+}
+
+// fn scan_domains_with_hosts(domainsWithHosts: &[DomainWithHost]) -> Vec<(DomainWithHost, DnsScanResult, MxScanResult)> {
+//     domainsWithHosts
+//         .iter()
+//         .map(|dh| (dh, dh.domain.scan(), dh.domain.scan()))
+//         .collect::<Vec<(DomainWithHost, DnsScanResult, MxScanResult)>>()
+// }
+fn dns_scan_domains_with_hosts(domainsWithHosts: &[DomainWithHost]) -> Vec<DnsScanResult> {
+    domainsWithHosts
+        .iter()
+        .map(|dh| dh.domain.scan())
+        .collect::<Vec<DnsScanResult>>()
 }
 
 pub trait Scanner<ScanResult> {
@@ -61,6 +82,13 @@ impl FromStr for Domain {
 }
 
 type Host = String;
+
+#[derive(Debug, PartialEq, Clone)]
+struct DomainWithHost {
+    domain: Domain,
+    host: Option<Host>,
+}
+
 type IP = String;
 
 #[derive(Debug)]
