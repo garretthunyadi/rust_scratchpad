@@ -13,12 +13,7 @@ pub fn main() -> Result<()> {
     let dns: DnsScanResult = domain.scan();
     println!("DnsScanResult -> {:?}", dns);
 
-    // let domains = vec!["google.com","bogus","bbc.com"].iter().map(|s| Domain::from_str(s)).collect::<Vec<_>>();
-    // let domains = vec!["google.com", "bogus", "bbc.com"]
-    //     .iter()
-    //     .map(|s| Domain::from_str(s))
-    //     .filter_map(Result::ok)
-    //     .collect::<Vec<(Domain, MxScanResult, DnsScanResult)>>();
+    // this ignores bad domains
     let domains = parse_domains(&["google.com", "bogus", "bbc.com"]);
     println!("domains: {:?}", domains);
     let results = scan_domains(&domains);
@@ -27,9 +22,13 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 
-fn parse_domains(ss: &[&str]) -> Vec<Domain> {
-    vec![]
+fn parse_domains(strs: &[&str]) -> Vec<Domain> {
+    strs.iter()
+        .map(|s| Domain::from_str(s))
+        .filter_map(Result::ok)
+        .collect::<Vec<Domain>>()
 }
+
 fn scan_domains(domains: &[Domain]) -> Vec<(Domain, DnsScanResult, MxScanResult)> {
     domains
         .iter()
