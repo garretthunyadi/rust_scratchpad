@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 rand="0.7.0"
 crc = "^1.0.0"
+specs = "0.14.0"
+specs-derive = "0.4.0"
