@@ -7,7 +7,7 @@ use std::str::FromStr;
 pub fn main() -> Result<()> {
     println!("Scans 4");
     // let domain = "google.com".parse::<Domain>();
-    let domain = Domain::from_str("google.codm")?;
+    let domain = Domain::from_str("google.com")?;
     let mx: MxScanResult = domain.scan();
     println!("MxScanResult -> {:?}", mx);
     let dns: DnsScanResult = domain.scan();
@@ -18,8 +18,10 @@ pub fn main() -> Result<()> {
         .iter()
         .map(|s| Domain::from_str(s))
         .filter_map(Result::ok)
-        .collect::<Vec<_>>();
+        .map(|d| (d.clone(), d.scan(), d.scan()))
+        .collect::<Vec<(Domain,MxScanResult,DnsScanResult)>>();
 
+    println!("domains: {:?}", domains);
     Ok(())
 }
 
@@ -27,7 +29,7 @@ pub trait Scanner<ScanResult> {
     fn scan(&self) -> ScanResult;
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq,Clone)]
 struct Domain {
     domain: String,
 }
