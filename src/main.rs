@@ -7,6 +7,7 @@ extern crate specs_derive;
 
 extern crate rand;
 
+mod bayes;
 mod corpus;
 mod docs;
 mod ecs;
@@ -45,8 +46,9 @@ macro_rules! s {
 // }
 
 fn main() {
+    bayes::main();
     // scratch::main();
-    headless_screenshot::main();
+    // headless_screenshot::main();
     // ecs::main();
 }
 // scratch::main();
