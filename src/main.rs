@@ -11,6 +11,7 @@ mod corpus;
 mod docs;
 mod ecs;
 mod hashing;
+mod headless_screenshot;
 mod iterator;
 mod linked_list;
 mod scans3;
@@ -44,7 +45,8 @@ macro_rules! s {
 // }
 
 fn main() {
-    scratch::main();
+    // scratch::main();
+    headless_screenshot::main();
     // ecs::main();
 }
 // scratch::main();
