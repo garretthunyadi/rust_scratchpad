@@ -100,7 +100,9 @@ fn p_cause(cause_cnt: usize, total_cnt: usize) -> f32 {
 #[test]
 fn test_p_cause() {
     assert!((p_cause(50, 100) - 0.5).abs() < 0.000_001);
-    assert!((p_cause(0, 100) - 0.0).abs() < 0.000_001);
+    assert!((p_cause(0, 100) - 0.).abs() < 0.000_001);
+    assert!(approx_eq!(p_cause(50, 100), 0.5));
+    assert!(approx_eq!(p_cause(0, 100), 0.));
 }
 
 fn p_effect(effect_cnt: usize, total_cnt: usize) -> f32 {
