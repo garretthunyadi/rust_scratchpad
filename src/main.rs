@@ -31,10 +31,10 @@ macro_rules! s {
     };
 }
 
-fn main() -> Result<(), std::io::Error> {
-    scans4::main()?; //.or_else(|err| Err(s!(err)));
-    Ok(())
-}
+// fn main() -> Result<(), std::io::Error> {
+//     scans4::main()?; //.or_else(|err| Err(s!(err)));
+//     Ok(())
+// }
 
 // fn main() -> Result<(), String> {
 //     corpus::main().or_else(|err| Err(s!(err)))
@@ -43,10 +43,10 @@ fn main() -> Result<(), std::io::Error> {
 //     hashing::main()
 // }
 
-// fn main() {
-// scratch::main();
-// ecs::main();
-// }
+fn main() {
+    scratch::main();
+    // ecs::main();
+}
 // scratch::main();
 // main1();
 // traits1();
@@ -867,8 +867,6 @@ impl Talker for AThing<Rock> {
         Box::new(AThing { item: 5 })
     }
 }
-
-
 
 ///
 ///

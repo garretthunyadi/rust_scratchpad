@@ -1,20 +1,51 @@
+use std::fs::File;
+use std::io::prelude::*;
+
 pub fn main() {
-    println!("here scratch");
-    let thing1 = Thing { id: 100 };
-    println!("{}", thing1.speak());
-    thing1.listen_to(&thing1);
-    let thing2 = Thing { id: 200 };
-    thing1.listen_to(&thing2);
-    thing2.listen_to(&thing1);
-    thing2.listen_to(&thing2);
+    // println!("here scratch");
+    // let thing1 = Thing { id: 100 };
+    // println!("{}", thing1.speak());
+    // thing1.listen_to(&thing1);
+    // let thing2 = Thing { id: 200 };
+    // thing1.listen_to(&thing2);
+    // thing2.listen_to(&thing1);
+    // thing2.listen_to(&thing2);
 
-    let thing3: Thing = thing2.generate();
-    println!("Thing 3 id is {}", thing3.id);
-    let bizaro1: BizarroThing = thing1.generate();
-    println!("Bizarro 1 id is {}", bizaro1.id);
+    // let thing3: Thing = thing2.generate();
+    // println!("Thing 3 id is {}", thing3.id);
+    // let bizaro1: BizarroThing = thing1.generate();
+    // println!("Bizarro 1 id is {}", bizaro1.id);
 
-    let baby: Thing = thing1.give_birth();
-    println!("Thing 1 gave birth to {}", baby.id);
+    // let baby: Thing = thing1.give_birth();
+    // println!("Thing 1 gave birth to {}", baby.id);
+    assert!(browse_wikipedia().is_ok());
+}
+
+use headless_chrome::{protocol::page::ScreenshotFormat, Browser};
+fn browse_wikipedia() -> Result<(), failure::Error> {
+    let browser = Browser::default()?;
+
+    let tab = browser.wait_for_initial_tab()?;
+    tab.navigate_to("https://www.wikipedia.org")?;
+    tab.wait_for_element("input#searchInput")?.click()?;
+    tab.type_str("WebKit")?.press_key("Enter")?;
+    tab.wait_for_element("#firstHeading")?;
+    assert!(tab.get_url().ends_with("WebKit"));
+
+    let jpeg_data = tab.capture_screenshot(ScreenshotFormat::JPEG(Some(75)), None, true)?;
+
+    let mut pos = 0;
+    let mut buffer = File::create("tmp.jpeg")?;
+
+    while pos < jpeg_data.len() {
+        let bytes_written = buffer.write(&jpeg_data[pos..])?;
+        pos += bytes_written;
+    }
+
+    let _png_data = tab
+        .wait_for_element("#mw-content-text > div > table.infobox.vevent")?
+        .capture_screenshot(ScreenshotFormat::PNG)?;
+    Ok(())
 }
 
 #[derive(PartialEq)]
