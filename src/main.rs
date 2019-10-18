@@ -33,10 +33,11 @@ macro_rules! s {
     };
 }
 
-// fn main() -> Result<(), std::io::Error> {
+fn main() -> Result<(), std::io::Error> {
+    bayes::main()?;
 //     scans4::main()?; //.or_else(|err| Err(s!(err)));
-//     Ok(())
-// }
+    Ok(())
+}
 
 // fn main() -> Result<(), String> {
 //     corpus::main().or_else(|err| Err(s!(err)))
@@ -45,12 +46,12 @@ macro_rules! s {
 //     hashing::main()
 // }
 
-fn main() {
-    bayes::main();
+// fn main() {
+    // let _ = bayes::main();
     // scratch::main();
     // headless_screenshot::main();
     // ecs::main();
-}
+// }
 // scratch::main();
 // main1();
 // traits1();
