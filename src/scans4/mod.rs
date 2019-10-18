@@ -20,8 +20,10 @@ pub fn main() -> Result<()> {
 
     println!("results: {:?}", results);
 
+    println!("----dns_scan_domains_with_hosts----");
     let domains_with_hosts = append_hosts(&domains);
     let results = scan_domains_with_hosts(&domains_with_hosts);
+    println!("results: {:?}", results);
 
     Ok(())
 }
@@ -40,21 +42,30 @@ fn scan_domains(domains: &[Domain]) -> Vec<(Domain, DnsScanResult, MxScanResult)
         .collect::<Vec<(Domain, DnsScanResult, MxScanResult)>>()
 }
 
-fn append_hosts(domans: &[Domain]) -> Vec<DomainWithHost> {
-    vec![]
+fn host_for(domain: &Domain) -> Option<Host> {
+    None
 }
 
-// fn scan_domains_with_hosts(domainsWithHosts: &[DomainWithHost]) -> Vec<(DomainWithHost, DnsScanResult, MxScanResult)> {
-//     domainsWithHosts
-//         .iter()
-//         .map(|dh| (dh, dh.domain.scan(), dh.domain.scan()))
-//         .collect::<Vec<(DomainWithHost, DnsScanResult, MxScanResult)>>()
-// }
-fn dns_scan_domains_with_hosts(domainsWithHosts: &[DomainWithHost]) -> Vec<DnsScanResult> {
-    domainsWithHosts
+fn append_hosts(domains: &[Domain]) -> Vec<DomainWithHost> {
+    domains
         .iter()
-        .map(|dh| dh.domain.scan())
-        .collect::<Vec<DnsScanResult>>()
+        .map(|domain| {
+            let host = host_for(domain);
+            DomainWithHost {
+                domain: domain.clone(),
+                host,
+            }
+        })
+        .collect()
+}
+
+fn scan_domains_with_hosts(
+    domains_with_hosts: &[DomainWithHost],
+) -> Vec<(DomainWithHost, DnsScanResult, MxScanResult)> {
+    domains_with_hosts
+        .iter()
+        .map(|dh| (dh.clone(), dh.domain.scan(), dh.domain.scan()))
+        .collect::<Vec<(DomainWithHost, DnsScanResult, MxScanResult)>>()
 }
 
 pub trait Scanner<ScanResult> {
@@ -103,14 +114,16 @@ struct DnsScanResult {
 
 impl Scanner<MxScanResult> for Domain {
     fn scan(&self) -> MxScanResult {
-        MxScanResult { servers: vec![] }
+        MxScanResult {
+            servers: vec![format!("mail.{}", self.domain)],
+        }
     }
 }
 
 impl Scanner<DnsScanResult> for Domain {
     fn scan(&self) -> DnsScanResult {
         DnsScanResult {
-            ip: String::from(""),
+            ip: String::from("0.0.0.0"),
         }
     }
 }
