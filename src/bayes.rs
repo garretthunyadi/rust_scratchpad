@@ -34,7 +34,7 @@ fn test_approx_eq_macro() {
     assert!(!approx_eq!(0.51, 0.5));
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct Counts {
     cause: usize,
     effect: usize,
@@ -53,7 +53,7 @@ struct Stats {
 }
 
 fn flu_stats_given_counts(flu: usize, fever: usize, both: usize, total: usize) -> Stats {
-    stats_given_counts(Counts {
+    stats_given_counts(&Counts {
         cause: flu,
         effect: fever,
         both,
@@ -61,7 +61,7 @@ fn flu_stats_given_counts(flu: usize, fever: usize, both: usize, total: usize) -
     })
 }
 
-fn stats_given_counts(counts: Counts) -> Stats {
+fn stats_given_counts(counts: &Counts) -> Stats {
     let p_cause = p_cause(counts.cause, counts.total);
     let p_effect = p_effect(counts.effect, counts.total);
     let p_both = p_both(counts.both, counts.total);
@@ -70,7 +70,7 @@ fn stats_given_counts(counts: Counts) -> Stats {
     let p_cause_given_effect = p_cause_given_effect(p_cause, p_effect, p_effect_given_cause);
 
     Stats {
-        counts,
+        counts: counts.clone(),
         p_cause,
         p_effect,
         p_both,
@@ -82,15 +82,15 @@ fn stats_given_counts(counts: Counts) -> Stats {
 #[test]
 fn test_stats_given_counts() {
     let counts = Counts {
-            cause: 2,
-            effect: 1,
-            both: 0,
-            total: 2
-        };
+        cause: 2,
+        effect: 1,
+        both: 0,
+        total: 2,
+    };
     assert_eq!(
-        stats_given_counts(counts,
+        stats_given_counts(&counts),
         Stats {
-            counts,
+            counts: counts,
             p_cause: 1.0,
             p_effect: 0.5,
             p_both: 0.0,
@@ -99,20 +99,17 @@ fn test_stats_given_counts() {
         }
     );
 
+    let counts = Counts {
+        cause: 14,
+        effect: 20,
+        both: 11,
+        total: 100,
+    };
+
     assert_eq!(
-        stats_given_counts(Counts {
-            cause: 14,
-            effect: 20,
-            both: 11,
-            total: 100
-        }),
+        stats_given_counts(&counts),
         Stats {
-            counts: Counts {
-                cause: 14,
-                effect: 20,
-                both: 11,
-                total: 100
-            },
+            counts: counts.clone(),
             p_cause: 0.14,
             p_effect: 0.2,
             p_both: 0.11,
