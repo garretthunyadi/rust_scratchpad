@@ -121,7 +121,7 @@ fn test_stats_given_counts() {
             p_effect: 0.2,
             p_both: 0.11,
             p_cause_given_effect: 0.55,
-            p_effect_given_cause: 0.79,
+            p_effect_given_cause: 0.785_714_27,
         }
     );
 
