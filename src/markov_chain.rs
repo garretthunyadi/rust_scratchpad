@@ -14,11 +14,12 @@ pub fn main() -> std::io::Result<()> {
 pub fn simplify_corpus(text: &str) -> String {
     text.split_ascii_whitespace()
         .map(|word| {
+            println!("{}", word);
             word.chars()
                 .filter(|&c| c.is_alphanumeric())
                 .collect::<String>()
         })
-        .collect()
+        .collect::<Vec<String>>().join(" ")
 }
 #[test]
 fn test_simplify_corpus() {
