@@ -11,8 +11,6 @@ pub fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-// corpus->iter->markov_dict
-// markov_dict->text
 pub fn simplify_corpus(text: &str) -> String {
     text.split_ascii_whitespace()
         .map(|word| {
@@ -23,7 +21,13 @@ pub fn simplify_corpus(text: &str) -> String {
         .collect()
 }
 #[test]
-fn test_simplify_corpus() {}
+fn test_simplify_corpus() {
+    assert_eq!(simplify_corpus("abc def ghi"), String::from("abc def ghi"));
+    assert_eq!(
+        simplify_corpus("ab,c def, ,ghi."),
+        String::from("abc def ghi")
+    );
+}
 
 pub fn simplify_word(word: &str) -> String {
     word.chars()
