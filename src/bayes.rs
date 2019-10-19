@@ -2,26 +2,24 @@ use std::cmp::Ordering;
 
 pub fn main() -> std::io::Result<()> {
     println!("bayes");
-    // flu_stats_given_counts((total = 3, fever = 1, flu = 2, both = 0))
     println!("{:?}", flu_stats_given_counts(2, 1, 2, 2));
-    // flu_stats_given_counts(2, 1, 0, 3);
-    // flu_stats_given_counts(1, 1, 1, 2);
-    // flu_stats_given_counts(10, 15, 10, 80);
-    // flu_stats_given_counts(14, 20, 11, 100);
-
     Ok(())
 }
 
 fn approx_eq(a: f32, b: f32) -> bool {
     match a.partial_cmp(&b) {
-        None | Some(Ordering::Equal) => (a - b).abs() < 0.000_001,
+        None | Some(Ordering::Equal) => (a - b).abs() < 0.000_000_1,
         _ => false,
     }
 }
+
+#[allow(clippy::excessive_precision)]
 #[test]
 fn test_approx_eq() {
     assert!(approx_eq(0.5, 0.5));
     assert!(!approx_eq(0.51, 0.5));
+    assert!(approx_eq(0.5, 0.500_000_01));
+    assert!(!approx_eq(0.5, 0.500_000_2));
 }
 
 macro_rules! approx_eq {
@@ -36,12 +34,17 @@ fn test_approx_eq_macro() {
     assert!(!approx_eq!(0.51, 0.5));
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
+struct Counts {
+    cause: usize,
+    effect: usize,
+    both: usize,
+    total: usize,
+}
+
+#[derive(Debug, PartialEq)]
 struct Stats {
-    cause_cnt: usize,
-    effect_cnt: usize,
-    both_cnt: usize,
-    total_cnt: usize,
+    counts: Counts,
     p_cause: f32,
     p_effect: f32,
     p_both: f32,
@@ -50,27 +53,24 @@ struct Stats {
 }
 
 fn flu_stats_given_counts(flu: usize, fever: usize, both: usize, total: usize) -> Stats {
-    stats_given_counts(flu, fever, both, total)
+    stats_given_counts(Counts {
+        cause: flu,
+        effect: fever,
+        both,
+        total,
+    })
 }
 
-fn stats_given_counts(
-    cause_cnt: usize,
-    effect_cnt: usize,
-    both_cnt: usize,
-    total_cnt: usize,
-) -> Stats {
-    let p_cause = p_cause(cause_cnt, total_cnt);
-    let p_effect = p_effect(effect_cnt, total_cnt);
-    let p_both = p_both(both_cnt, total_cnt);
+fn stats_given_counts(counts: Counts) -> Stats {
+    let p_cause = p_cause(counts.cause, counts.total);
+    let p_effect = p_effect(counts.effect, counts.total);
+    let p_both = p_both(counts.both, counts.total);
 
     let p_effect_given_cause = p_effect_given_cause(p_cause, p_both);
     let p_cause_given_effect = p_cause_given_effect(p_cause, p_effect, p_effect_given_cause);
 
     Stats {
-        cause_cnt,
-        effect_cnt,
-        both_cnt,
-        total_cnt,
+        counts,
         p_cause,
         p_effect,
         p_both,
@@ -79,6 +79,63 @@ fn stats_given_counts(
     }
 }
 
+#[test]
+fn test_stats_given_counts() {
+    assert_eq!(
+        stats_given_counts(Counts {
+            cause: 2,
+            effect: 1,
+            both: 0,
+            total: 2
+        }),
+        Stats {
+            counts: Counts {
+                cause: 2,
+                effect: 1,
+                both: 0,
+                total: 2
+            },
+            p_cause: 1.0,
+            p_effect: 0.5,
+            p_both: 0.0,
+            p_cause_given_effect: 0.0,
+            p_effect_given_cause: 0.0,
+        }
+    );
+
+    assert_eq!(
+        stats_given_counts(Counts {
+            cause: 14,
+            effect: 20,
+            both: 11,
+            total: 100
+        }),
+        Stats {
+            counts: Counts {
+                cause: 14,
+                effect: 20,
+                both: 11,
+                total: 100
+            },
+            p_cause: 0.14,
+            p_effect: 0.2,
+            p_both: 0.11,
+            p_cause_given_effect: 0.14,
+            p_effect_given_cause: 0.2,
+        }
+    );
+
+    // Counts:(total = 100, fever = 20, flu = 14, both = 11)
+
+    // P(flu)       = 0.14
+    // P(fever)     = 0.2
+    // P(fever,flu) = 0.11
+
+    // P(cause)  = P(flu)   = 0.14
+    // P(effect) = P(fever) = 0.2
+
+    // P(effect|cause) = P(fever | flu) = 0.79
+}
 // p_flu_g_fever = p_cause_g_effect = p_cause * p_effect_g_cause / p_effect; println("** P(cause|effect) = P(flu | fever) = ", round(p_cause_g_effect, digits = 2))
 
 fn ratio(some_cnt: usize, total_cnt: usize) -> f32 {
