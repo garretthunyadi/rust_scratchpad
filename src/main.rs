@@ -16,6 +16,7 @@ mod headless_screenshot;
 mod iterator;
 mod linked_list;
 mod markov_chain;
+mod markov_chain1;
 mod markov_chain2;
 mod scans3;
 mod scans4;
@@ -39,8 +40,9 @@ macro_rules! s {
 fn main() -> Result<(), std::io::Error> {
     // bayes::main()?;
     // typed_bayes::main()?;
-    // markov_chain::main()?;
-    markov_chain2::main()?;
+    markov_chain::main()?;
+    // markov_chain1::main()?;
+    // markov_chain2::main()?;
     //     scans4::main()?; //.or_else(|err| Err(s!(err)));
     Ok(())
 }
