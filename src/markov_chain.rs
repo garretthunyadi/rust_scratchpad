@@ -19,11 +19,20 @@ pub fn main() -> std::io::Result<()> {
     println!("first_bigram: {:?}", first_bigram);
 
     let model = bigram_markov_model(&words);
-    // println!("model: {:?}", model);
-    let ws = model.get(&first_bigram).unwrap();
-    println!("ws: {:?}", ws);
-    let w = *ws.choose(&mut rand::thread_rng()).unwrap();
-    println!("rand(ws): {:?}", w);
+
+    let seq = chain(&model, 10, &first_bigram);
+    println!("seq: {:?}", seq);
+    let seq = chain(&model, 10, &first_bigram);
+    println!("seq: {:?}", seq);
+    let seq = chain(&model, 10, &first_bigram);
+    println!("seq: {:?}", seq);
+
+    let seq = chain(&model, 10, sample_key(&model));
+    println!("seq: {:?}", seq);
+    let seq = chain(&model, 10, sample_key(&model));
+    println!("seq: {:?}", seq);
+    let seq = chain(&model, 10, sample_key(&model));
+    println!("seq: {:?}", seq);
 
     Ok(())
 }
@@ -52,14 +61,42 @@ fn test_bigram_markov_model() {
     // unimplemented!();
 }
 
+fn sample_key<'a>(model: &'a BigramMarkovModel<'a>) -> &'a Bigram<'a> {
+    model.keys().choose(&mut rand::thread_rng()).unwrap()
+}
+
+fn chain<'a>(model: &BigramMarkovModel<'a>, length: usize, from: &Bigram) -> Vec<&'a str> {
+    // the number four 4ever:
+    // let mut fours = iter::repeat(n).map(||sample(model));
+    let mut next = *from;
+
+    let mut words = vec![];
+    for _ in 0..length {
+        let word = sample(model, &next);
+        if word.is_empty() {
+            break;
+        }
+        words.push(word);
+        // println!("{} ", word);
+        next = (from.1, word);
+    }
+
+    words
+}
+
+fn sample<'a>(model: &BigramMarkovModel<'a>, from: &Bigram) -> &'a str {
+    match model.get(&from) {
+        None => &"",
+        Some(words) => *words.choose(&mut rand::thread_rng()).unwrap(),
+    }
+    // let words = model.get(&from).unwrap();
+    // *words.choose(&mut rand::thread_rng()).unwrap()
+}
+
 fn update_model<'a>(model: &mut BigramMarkovModel<'a>, trigram: &Trigram<'a>) {
     // println!("update_model:{:?}", trigram);
     let bigram = (trigram.0, trigram.1);
     let word = trigram.2;
-
-    // model.insert(bigram, vec![trigram.2]);
-    // let words = model.get_mut(&bigram).unwrap();
-    // words.push(trigram.2)
 
     match model.get_mut(&bigram) {
         Some(words) => {
@@ -69,15 +106,6 @@ fn update_model<'a>(model: &mut BigramMarkovModel<'a>, trigram: &Trigram<'a>) {
             model.insert(bigram, vec![word]);
         }
     }
-    // function chain(dict::BigramMarkovChain, (w1, w2, w3))
-    //     k = (w1, w2)
-    //     if (haskey(dict, k))
-    //         dict[k] = append!(dict[k], [w3])
-    //     else
-    //         dict[k] = [w3]
-    //     end
-    //     dict
-    // end
 }
 
 pub fn simplify_corpus(text: &str) -> String {
