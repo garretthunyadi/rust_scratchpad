@@ -7,8 +7,6 @@ extern crate specs_derive;
 
 extern crate rand;
 
-mod markov_chain;
-mod typed_bayes;
 mod bayes;
 mod corpus;
 mod docs;
@@ -17,10 +15,13 @@ mod hashing;
 mod headless_screenshot;
 mod iterator;
 mod linked_list;
+mod markov_chain;
+mod markov_chain2;
 mod scans3;
 mod scans4;
 mod scratch;
 mod sliding_log;
+mod typed_bayes;
 
 use std::fs;
 use std::sync::mpsc;
@@ -38,7 +39,8 @@ macro_rules! s {
 fn main() -> Result<(), std::io::Error> {
     // bayes::main()?;
     // typed_bayes::main()?;
-    markov_chain::main()?;
+    // markov_chain::main()?;
+    markov_chain2::main()?;
     //     scans4::main()?; //.or_else(|err| Err(s!(err)));
     Ok(())
 }
