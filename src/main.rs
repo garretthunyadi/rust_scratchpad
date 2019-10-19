@@ -7,6 +7,7 @@ extern crate specs_derive;
 
 extern crate rand;
 
+mod markov_chain;
 mod typed_bayes;
 mod bayes;
 mod corpus;
@@ -36,7 +37,8 @@ macro_rules! s {
 
 fn main() -> Result<(), std::io::Error> {
     // bayes::main()?;
-    typed_bayes::main()?;
+    // typed_bayes::main()?;
+    markov_chain::main()?;
     //     scans4::main()?; //.or_else(|err| Err(s!(err)));
     Ok(())
 }
