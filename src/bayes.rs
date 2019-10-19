@@ -81,20 +81,16 @@ fn stats_given_counts(counts: Counts) -> Stats {
 
 #[test]
 fn test_stats_given_counts() {
-    assert_eq!(
-        stats_given_counts(Counts {
+    let counts = Counts {
             cause: 2,
             effect: 1,
             both: 0,
             total: 2
-        }),
+        };
+    assert_eq!(
+        stats_given_counts(counts,
         Stats {
-            counts: Counts {
-                cause: 2,
-                effect: 1,
-                both: 0,
-                total: 2
-            },
+            counts,
             p_cause: 1.0,
             p_effect: 0.5,
             p_both: 0.0,
@@ -124,17 +120,6 @@ fn test_stats_given_counts() {
             p_effect_given_cause: 0.785_714_27,
         }
     );
-
-    // Counts:(total = 100, fever = 20, flu = 14, both = 11)
-
-    // P(flu)       = 0.14
-    // P(fever)     = 0.2
-    // P(fever,flu) = 0.11
-
-    // P(cause)  = P(flu)   = 0.14
-    // P(effect) = P(fever) = 0.2
-
-    // P(effect|cause) = P(fever | flu) = 0.79
 }
 // p_flu_g_fever = p_cause_g_effect = p_cause * p_effect_g_cause / p_effect; println("** P(cause|effect) = P(flu | fever) = ", round(p_cause_g_effect, digits = 2))
 
