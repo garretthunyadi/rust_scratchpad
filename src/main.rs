@@ -7,6 +7,7 @@ extern crate specs_derive;
 
 extern crate rand;
 
+mod typed_bayes;
 mod bayes;
 mod corpus;
 mod docs;
@@ -34,8 +35,9 @@ macro_rules! s {
 }
 
 fn main() -> Result<(), std::io::Error> {
-    bayes::main()?;
-//     scans4::main()?; //.or_else(|err| Err(s!(err)));
+    // bayes::main()?;
+    typed_bayes::main()?;
+    //     scans4::main()?; //.or_else(|err| Err(s!(err)));
     Ok(())
 }
 
@@ -47,10 +49,10 @@ fn main() -> Result<(), std::io::Error> {
 // }
 
 // fn main() {
-    // let _ = bayes::main();
-    // scratch::main();
-    // headless_screenshot::main();
-    // ecs::main();
+// let _ = bayes::main();
+// scratch::main();
+// headless_screenshot::main();
+// ecs::main();
 // }
 // scratch::main();
 // main1();
