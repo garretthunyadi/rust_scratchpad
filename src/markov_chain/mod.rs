@@ -1,6 +1,9 @@
+mod mc_iter;
+mod util;
+
+use mc_iter::BigramMarkovModelIterator;
 use rand::prelude::*;
 use std::collections::HashMap;
-mod util;
 
 pub fn main() -> std::io::Result<()> {
     println!("markov chain");
@@ -18,19 +21,52 @@ pub fn main() -> std::io::Result<()> {
 
     let model = BigramMarkovModel::new(&words);
 
-    let seq = model.chain(10, model.sample_key());
+    // let seq = model.chain(10, model.random_key());
+    // println!("seq: {:?}", seq);
+    // let seq = model.chain(10, model.random_key());
+    // println!("seq: {:?}", seq);
+    // let seq = model.chain(10, model.random_key());
+    // println!("seq: {:?}", seq);
+
+    let seq = model.chn(10, model.random_key());
     println!("seq: {:?}", seq);
-    let seq = model.chain(10, model.sample_key());
-    println!("seq: {:?}", seq);
-    let seq = model.chain(10, model.sample_key());
+    // let seq = model.chain(10, model.random_key());
+    // println!("seq: {:?}", seq);
+    // let seq = model.chain(10, model.random_key());
+    // println!("seq: {:?}", seq);
+
+    let seed = ("be", "lodged");
+
+    let seq = model.chn(10, &seed);
     println!("seq: {:?}", seq);
 
-    let seq = model.chain(10, model.sample_key());
-    println!("seq: {:?}", seq);
-    let seq = model.chain(10, model.sample_key());
-    println!("seq: {:?}", seq);
-    let seq = model.chain(10, model.sample_key());
-    println!("seq: {:?}", seq);
+    // Iterator
+    let mut iter = BigramMarkovModelIterator::new(&model);
+    iter.update_curr(seed);
+    println!("{:?}", iter.clone().take(40).collect::<Vec<_>>().join(" "));
+    iter.update_curr(seed);
+    println!(
+        "\n\n{:?}",
+        iter.clone().take(40).collect::<Vec<_>>().join(" ")
+    );
+    // let next = iter.next();
+    // println!("next: {:?}", next);
+    // let next = iter.next();
+    // println!("next: {:?}", next);
+    let iter = BigramMarkovModelIterator::new(&model);
+    // for word in iter.clone() {
+    //     print!("{} ", word);
+    // }
+    for (i, word) in iter.clone().enumerate() {
+        if i > 100 {
+            break;
+        }
+        // print!("{} ", word);
+    }
+    println!();
+
+    let res = iter.clone().take(100).collect::<Vec<_>>().join(" ");
+    println!("{:?}", res);
 
     Ok(())
 }
@@ -40,7 +76,7 @@ type Trigram<'a> = (&'a str, &'a str, &'a str);
 
 type BigramHashMap<'a> = HashMap<Bigram<'a>, Vec<&'a str>>;
 
-struct BigramMarkovModel<'a> {
+pub struct BigramMarkovModel<'a> {
     map: BigramHashMap<'a>,
 }
 impl<'a> BigramMarkovModel<'a> {
@@ -76,18 +112,19 @@ impl<'a> BigramMarkovModel<'a> {
         }
     }
 
-    fn sample_key(&self) -> &'a Bigram {
+    fn random_key(&self) -> &'a Bigram {
         self.map.keys().choose(&mut rand::thread_rng()).unwrap()
     }
 
-    fn sample(&self, from: &Bigram) -> &'a str {
+    pub fn sample(&self, from: &Bigram) -> &'a str {
         match self.map.get(&from) {
             None => &"",
             Some(words) => *words.choose(&mut rand::thread_rng()).unwrap(),
         }
     }
 
-    fn chain(&self, length: usize, from: &Bigram) -> Vec<&'a str> {
+    // todo: having a naming collision with iter, so renaming "chain" for now
+    fn chn(&self, length: usize, from: &Bigram) -> Vec<&'a str> {
         // the number four 4ever:
         // let mut fours = iter::repeat(n).map(||sample(model));
         let mut next = *from;
@@ -111,3 +148,10 @@ impl<'a> BigramMarkovModel<'a> {
 fn test_bigram_markov_model() {
     // unimplemented!();
 }
+
+//
+//
+//
+//
+//
+//
