@@ -24,6 +24,7 @@ mod scans3;
 mod scans4;
 mod scratch;
 mod sliding_log;
+mod threads;
 mod typed_bayes;
 
 use std::fs;
@@ -40,11 +41,12 @@ macro_rules! s {
 }
 
 fn main() -> Result<(), std::io::Error> {
+    threads::main()?;
     // bayes::main()?;
     // typed_bayes::main()?;
     // iterator_impl_1::main()?;
     // iterator_impl_2::main()?;
-    markov_chain::main()?;
+    // markov_chain::main()?;
     // markov_chain1::main()?;
     // markov_chain2::main()?;
     //     scans4::main()?; //.or_else(|err| Err(s!(err)));
