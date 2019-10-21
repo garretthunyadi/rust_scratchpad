@@ -58,7 +58,13 @@ pub fn bigram_markov_model<'a>(words: &[&'a str]) -> BigramMarkovModel<'a> {
 
 #[test]
 fn test_bigram_markov_model() {
-    // unimplemented!();
+    let mut orig_text = String::from(include_str!("../data/moby_dick.txt"));
+    orig_text.truncate(1000);
+    let corpus = simplify_corpus(&orig_text);
+    let words = words(&corpus);
+    let first_bigram = (*words.get(0).unwrap(), *words.get(1).unwrap());
+    // println!("first_bigram: {:?}", first_bigram);
+    let model = bigram_markov_model(&words);
 }
 
 fn sample_key<'a>(model: &'a BigramMarkovModel<'a>) -> &'a Bigram<'a> {

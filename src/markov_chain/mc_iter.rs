@@ -53,6 +53,17 @@ fn test_bmm_iter() {
     // assert_eq!(iter.next(), None);
 }
 
+// impl<'a> IntoIterator for BigramMarkovModel<'a> {
+//     type Item = &'a str;
+//     // type IntoIter = ::std::vec::IntoIter<Self::Item>;
+//     type IntoIter = BigramMarkovModelIterator<'a>;
+
+//     fn into_iter(self) -> Self::IntoIter {
+//         // self.0.into_iter()
+//         BigramMarkovModelIterator::new(&self)
+//     }
+// }
+
 // // the BigramMM uses the prev two words to get the next, so the state must contain the prev two words
 // // use super::*;
 

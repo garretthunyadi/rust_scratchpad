@@ -1,3 +1,4 @@
+pub mod examples;
 mod mc_iter;
 mod util;
 
