@@ -53,6 +53,16 @@ fn test_bmm_iter() {
     // assert_eq!(iter.next(), None);
 }
 
+// impl<'a> MarkovChain for BigramMarkovModelIterator<'a> {
+//     type Item = &'a str;
+//     fn next_item(&mut self) -> Self::Item {
+//         self.model.sample(&self.curr)
+//     }
+// }
+
+// TODO: I can't figure out how to create an into iter implementation
+// for this scenario where the iterator constructor takes a parameter.
+// "cannot return value referencing function parameter `self`"
 // impl<'a> IntoIterator for BigramMarkovModel<'a> {
 //     type Item = &'a str;
 //     // type IntoIter = ::std::vec::IntoIter<Self::Item>;

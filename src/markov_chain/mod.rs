@@ -1,3 +1,4 @@
+pub mod bigram_markov_chain;
 pub mod examples;
 mod mc_iter;
 mod util;
@@ -5,6 +6,11 @@ mod util;
 use mc_iter::BigramMarkovModelIterator;
 use rand::prelude::*;
 use std::collections::HashMap;
+
+trait MarkovChain {
+    type Item;
+    fn next_item(&mut self) -> Self::Item;
+}
 
 pub fn main() -> std::io::Result<()> {
     println!("markov chain");

@@ -17,6 +17,24 @@ pub fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+#[test]
+fn test_misc() {
+    // let x = vec!["Jill", "Jack", "Jane", "John"];
+    // let y = x.clone().into_iter().collect::<Vec<_>>();
+    // assert_eq!(y.len(), 4);
+
+    // struct Person {
+    //     name: String,
+    // }
+    // impl Person {
+    //     fn new<S: Into<String>>(name: S) -> Person {
+    //         Person { name: name.into() }
+    //     }
+    // }
+    // let person = Person::new("Herman");
+    // let person = Person::new("Herman".to_string());
+}
+
 mod counter {
     pub struct Counter {
         count: usize,
@@ -36,5 +54,57 @@ mod counter {
         fn next(&mut self) -> Option<usize> {
             Some(self.inc())
         }
+    }
+}
+
+//
+//  IntoIter
+//
+struct Pixel {
+    r: i8,
+    g: i8,
+    b: i8,
+}
+
+impl IntoIterator for Pixel {
+    type Item = i8;
+    type IntoIter = PixelIntoIterator;
+
+    fn into_iter(self) -> Self::IntoIter {
+        PixelIntoIterator {
+            pixel: self,
+            index: 0,
+        }
+    }
+}
+
+struct PixelIntoIterator {
+    pixel: Pixel,
+    index: usize,
+}
+
+impl Iterator for PixelIntoIterator {
+    type Item = i8;
+    fn next(&mut self) -> Option<i8> {
+        let result = match self.index {
+            0 => self.pixel.r,
+            1 => self.pixel.g,
+            2 => self.pixel.b,
+            _ => return None,
+        };
+        self.index += 1;
+        Some(result)
+    }
+}
+
+#[test]
+fn test_pixel() {
+    let p = Pixel {
+        r: 54,
+        g: 23,
+        b: 74,
+    };
+    for component in p {
+        println!("{}", component);
     }
 }

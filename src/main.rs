@@ -47,8 +47,9 @@ fn main() -> Result<(), std::io::Error> {
     // typed_bayes::main()?;
     // iterator_impl_1::main()?;
     // iterator_impl_2::main()?;
-    // markov_chain::examples::bigram_markov_chain::main()?;
-    markov_chain::examples::coin_bets::main()?;
+    // markov_chain::examples::bigram_markov_chain_example::main()?;
+    // markov_chain::examples::coin_bets::main()?;
+    markov_chain::examples::main()?;
     // markov_chain::main()?;
     // markov_chain1::main()?;
     // markov_chain2::main()?;
