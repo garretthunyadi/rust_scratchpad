@@ -4,16 +4,13 @@ pub mod coin_bets;
 use super::*;
 pub fn main() -> std::io::Result<()> {
     println!("--- (1) coin bets markov chain example ---");
-
     // the user (player) starts with $10 and bets $1 on coin toss.
     // the markov chain models the state progression.
-    let mut bets = coin_bets::CoinBetsMarkovChain::new(2);
-    let amt = bets.next();
-    println!("{:?}", amt);
-    let amt = bets.next();
-    println!("{:?}", amt);
-    let amt = bets.next();
-    println!("{:?}", amt);
+    let bets = coin_bets::CoinBetsMarkovChain::new(10);
+    for amt in bets {
+        print!("{:?} ", amt);
+    }
+    println!();
 
     println!("--- (2) bigram markov chain example ---");
     let mut orig_text = String::from(include_str!("../../../data/moby_dick.txt"));
@@ -25,14 +22,18 @@ pub fn main() -> std::io::Result<()> {
     println!("first_bigram: {:?}", first_bigram);
 
     let model = BigramMarkovModel::new(&words);
-    let mut chain = super::bigram_markov_chain::BigramMarkovChain::new(&model);
+    let chain = super::bigram_markov_chain::BigramMarkovChain::new(&model);
 
-    let word = chain.next();
-    println!("{:?}", word);
-    let word = chain.next();
-    println!("{:?}", word);
-    let word = chain.next();
-    println!("{:?}", word);
+    for (i, word) in chain.clone().enumerate() {
+        print!("{} ", word);
+        if i > 100 {
+            break;
+        }
+    }
+    println!();
+
+    let words = chain.take(100).collect::<Vec<_>>().join(" ");
+    println!("{}", words);
 
     Ok(())
 }

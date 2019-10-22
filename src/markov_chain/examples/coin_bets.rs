@@ -3,14 +3,11 @@ pub fn main() -> std::io::Result<()> {
 
     // the user (player) starts with $10 and bets $1 on coin toss.
     // the markov chain models the state progression.
-    let mut bets = CoinBetsMarkovChain { balance: 2 };
-    let amt = bets.next();
-    println!("{:?}", amt);
-    let amt = bets.next();
-    println!("{:?}", amt);
-    let amt = bets.next();
-    println!("{:?}", amt);
-
+    let bets = CoinBetsMarkovChain { balance: 10 };
+    for amt in bets {
+        print!("{:?} ", amt);
+    }
+    println!();
     Ok(())
 }
 
@@ -37,10 +34,16 @@ impl CoinBetsMarkovChain {
 impl Iterator for CoinBetsMarkovChain {
     type Item = u32;
     fn next(&mut self) -> Option<Self::Item> {
+        use rand::Rng;
+
         if self.balance == 0 {
             None
         } else {
-            self.balance -= 1;
+            if rand::thread_rng().gen() {
+                self.balance += 1;
+            } else {
+                self.balance -= 1;
+            }
 
             Some(self.balance)
         }

@@ -38,39 +38,5 @@ pub fn main() -> std::io::Result<()> {
     let seq = model.chn(10, &seed);
     println!("seq: {:?}", seq);
 
-    // Iterator
-    let mut iter = BigramMarkovModelIterator::new(&model);
-    iter.update_curr(seed);
-    println!("{:?}", iter.clone().take(40).collect::<Vec<_>>().join(" "));
-    iter.update_curr(seed);
-    println!(
-        "\n\n{:?}",
-        iter.clone().take(40).collect::<Vec<_>>().join(" ")
-    );
-    // let next = iter.next();
-    // println!("next: {:?}", next);
-    // let next = iter.next();
-    // println!("next: {:?}", next);
-    let iter = BigramMarkovModelIterator::new(&model);
-    for (i, word) in iter.clone().enumerate() {
-        print!("{} ", word);
-        if i == 10 {
-            break;
-        }
-    }
-    for (i, word) in iter.clone().enumerate() {
-        if i > 100 {
-            break;
-        }
-        // print!("{} ", word);
-    }
-    println!();
-
-    let res = iter.clone().take(100).collect::<Vec<_>>().join(" ");
-    println!("{:?}", res);
-
-    // Into Iter
-    // let iter = model.iter();
-
     Ok(())
 }
