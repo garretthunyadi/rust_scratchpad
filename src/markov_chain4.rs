@@ -4,6 +4,7 @@ use std::hash::Hash;
 pub fn main() -> std::io::Result<()> {
     println!("markov_chain4");
 
+    // Simple numbers
     let mut builder = BigramMMBuilder::new();
     builder.update(&[1, 2, 3, 4, 5]);
     let model = builder.to_model();
@@ -14,21 +15,23 @@ pub fn main() -> std::io::Result<()> {
     let res = chain.take(100).collect::<Vec<_>>();
     println!("{:?}", res);
 
+    // Moby Dick
+    let mut builder = BigramMMBuilder::new();
+    let mut orig_text = String::from(include_str!("../data/moby_dick.txt"));
+    orig_text.truncate(10000);
+    let corpus = super::markov_chain::util::simplify_corpus(&orig_text);
+    let corpus = corpus.to_lowercase();
+    let words = super::markov_chain::util::words(&corpus);
+    builder.update(&words);
+    let model = builder.to_model();
+    let chain = BigramChain::new(model, ("call", "me"));
+    let res = chain.take(1000).collect::<Vec<_>>().join(" ");
+    println!("{:?}", res);
+
     Ok(())
 }
 
 type Bigram<T> = (T, T);
-
-// note: an implementation of `std::cmp::PartialEq` might be missing for `(T, T)`rustc(E0369)
-// impl<T: PartialEq> PartialEq for Bigram<T> {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.0 == other.0 && self.1 == other.1
-//     }
-// }
-
-// fn eq<T>(a: Bigram<T>, b: Bigram<T>) -> bool {
-//     a == b
-// }
 
 struct BigramMMBuilder<T> {
     map: HashMap<Bigram<T>, Vec<T>>,
@@ -74,7 +77,7 @@ impl<T> BigramMM<T>
 where
     T: Hash + Eq + Copy,
 {
-    fn smpl(&self, from: Bigram<T>) -> Option<T> {
+    fn sample(&self, from: Bigram<T>) -> Option<T> {
         if let Some(next_items) = self.map.get(&from) {
             Some(next_items[0]) // TODO select
         } else {
@@ -104,7 +107,7 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(res) = self.model.smpl(self.curr) {
+        if let Some(res) = self.model.sample(self.curr) {
             // update the iterator state
             self.curr = (self.curr.1, res);
             // and return what we found

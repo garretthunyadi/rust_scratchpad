@@ -1,7 +1,7 @@
 pub mod bigram_markov_chain;
 pub mod examples;
 mod mc_iter;
-mod util;
+pub mod util;
 
 // use mc_iter::BigramMarkovModelIterator;
 use rand::prelude::*;
