@@ -30,14 +30,14 @@ impl<'a> Iterator for BigramMarkovChain<'a> {
     }
 }
 
-impl<'a> MarkovChain for BigramMarkovChain<'a> {
-    type Item = &'a str;
-    fn next_item(&mut self) -> Self::Item {
-        let word = self.model.sample(&self.curr);
-        self.curr = (self.curr.1, word);
-        word
-    }
-}
+// impl<'a> MarkovChain for BigramMarkovChain<'a> {
+//     type Item = &'a str;
+//     fn next_item(&mut self) -> Self::Item {
+//         let word = self.model.sample(&self.curr);
+//         self.curr = (self.curr.1, word);
+//         word
+//     }
+// }
 
 #[test]
 fn test_bmm_iter() {
@@ -51,11 +51,11 @@ fn test_bmm_iter() {
 
     let mut iter = BigramMarkovChain::new(&model);
     iter.update_curr(seed);
-    let res = iter.next_item();
+    let res = iter.next();
     iter.update_curr(seed);
-    let res = iter.next_item();
+    let res = iter.next();
     iter.update_curr(seed);
-    let res = iter.next_item();
+    let res = iter.next();
     // we're good if we got this far (for now)
     // assert!(res.is_some());
     // assert_eq!(iter.next(), None);

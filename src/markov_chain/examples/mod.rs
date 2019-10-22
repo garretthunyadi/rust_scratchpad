@@ -8,12 +8,12 @@ pub fn main() -> std::io::Result<()> {
     // the user (player) starts with $10 and bets $1 on coin toss.
     // the markov chain models the state progression.
     let mut bets = coin_bets::CoinBetsMarkovChain::new(2);
-    let amt = bets.next_item();
-    println!("{}", amt);
-    let amt = bets.next_item();
-    println!("{}", amt);
-    let amt = bets.next_item();
-    println!("{}", amt);
+    let amt = bets.next();
+    println!("{:?}", amt);
+    let amt = bets.next();
+    println!("{:?}", amt);
+    let amt = bets.next();
+    println!("{:?}", amt);
 
     println!("--- (2) bigram markov chain example ---");
     let mut orig_text = String::from(include_str!("../../../data/moby_dick.txt"));
@@ -27,12 +27,12 @@ pub fn main() -> std::io::Result<()> {
     let model = BigramMarkovModel::new(&words);
     let mut chain = super::bigram_markov_chain::BigramMarkovChain::new(&model);
 
-    let word = chain.next_item();
-    println!("{}", word);
-    let word = chain.next_item();
-    println!("{}", word);
-    let word = chain.next_item();
-    println!("{}", word);
+    let word = chain.next();
+    println!("{:?}", word);
+    let word = chain.next();
+    println!("{:?}", word);
+    let word = chain.next();
+    println!("{:?}", word);
 
     Ok(())
 }
