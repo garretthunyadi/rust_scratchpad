@@ -22,6 +22,7 @@ mod markov_chain;
 mod markov_chain1;
 mod markov_chain2;
 mod markov_chain4;
+mod mutex;
 mod rc_arc;
 mod rust_book;
 mod scans3;
@@ -47,7 +48,8 @@ macro_rules! s {
 }
 
 fn main() -> Result<(), std::io::Error> {
-    states::main()?;
+    mutex::main();
+    // states::main()?;
     // channels::main()?;
     // markov_chain4::main()?;
     // rc_arc::main()?;

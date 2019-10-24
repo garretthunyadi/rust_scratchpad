@@ -1,3 +1,21 @@
+///
+/// This is the same code as in bayes.rs, but it wraps the
+/// values in types, helping with errors where the parameters
+/// are misplaced.
+///
+/// This code is a bit more verbose, but safer. And the
+/// use of the code can be made easier by methods that take the
+/// raw numbers and immediately convert them into the safer, typed version, as in:
+///
+///   fn flu_stats_given_counts(flu: usize, fever: usize, both: usize, total: usize) -> Stats {
+///       stats_given_counts(
+///         &CauseCount(flu),
+///         &EffectCount(fever),
+///         &BothCount(both),
+///         &TotalCount(total),
+///     )
+///   }
+///
 use std::cmp::Ordering;
 
 pub fn main() -> std::io::Result<()> {

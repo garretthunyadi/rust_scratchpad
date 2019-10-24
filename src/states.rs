@@ -141,7 +141,7 @@ pub fn main2() -> std::io::Result<()> {
         .into_builder2()
         .into_artifact();
 
-    // cannot compile
+    // does not compile
     // Builder2::new().into_artifact();
     // Builder1::new().into_builder().into_builder1b();
     // Builder1::new().into_builder1b().into_builder1b();
@@ -157,8 +157,8 @@ pub fn main2() -> std::io::Result<()> {
 }
 
 /*
-    Let's consider this a moment. We've eliminated a whole class of runtime errors by stricturing
-    the code like this.
+    Let's consider this a moment. We've eliminated a whole class of runtime errors by structuring
+    the code like this!
 */
 #[test]
 fn test_main2() {
