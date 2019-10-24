@@ -8,6 +8,7 @@ extern crate specs_derive;
 extern crate rand;
 
 mod bayes;
+mod channels;
 mod corpus;
 mod docs;
 mod ecs;
@@ -21,6 +22,8 @@ mod markov_chain;
 mod markov_chain1;
 mod markov_chain2;
 mod markov_chain4;
+mod rc_arc;
+mod rust_book;
 mod scans3;
 mod scans4;
 mod scratch;
@@ -43,11 +46,9 @@ macro_rules! s {
 }
 
 fn main() -> Result<(), std::io::Error> {
-    // threads_1::main()?;
-    // bayes::main()?;
-    // typed_bayes::main()?;
-    // iterator_impl_1::main()?;
-    // iterator_impl_2::main()?;
+    channels::main()?;
+    // rc_arc::main()?;
+    // rust_book::boxes::main()?;
     markov_chain4::main()?;
     // markov_chain::examples::bigram_markov_chain_example::main()?;
     // markov_chain::examples::coin_bets::main()?;
@@ -55,6 +56,11 @@ fn main() -> Result<(), std::io::Error> {
     // markov_chain::main()?;
     // markov_chain1::main()?;
     // markov_chain2::main()?;
+    // threads_1::main()?;
+    // bayes::main()?;
+    // typed_bayes::main()?;
+    // iterator_impl_1::main()?;
+    // iterator_impl_2::main()?;
     //     scans4::main()?; //.or_else(|err| Err(s!(err)));
     Ok(())
 }
