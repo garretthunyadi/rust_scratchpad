@@ -28,6 +28,7 @@ mod scans3;
 mod scans4;
 mod scratch;
 mod sliding_log;
+mod states;
 mod threads_0;
 mod threads_1;
 mod typed_bayes;
@@ -46,10 +47,11 @@ macro_rules! s {
 }
 
 fn main() -> Result<(), std::io::Error> {
-    channels::main()?;
+    states::main()?;
+    // channels::main()?;
+    // markov_chain4::main()?;
     // rc_arc::main()?;
     // rust_book::boxes::main()?;
-    markov_chain4::main()?;
     // markov_chain::examples::bigram_markov_chain_example::main()?;
     // markov_chain::examples::coin_bets::main()?;
     // markov_chain::examples::main()?;
