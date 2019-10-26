@@ -1,48 +1,88 @@
-use std::fs;
+// use std::fs::File;
+// use std::io::{BufRead, BufReader, Error};
+use glob::{glob, Paths, PatternError};
+// use std::fs;
+use regex::Regex;
+use std::io::{Error, ErrorKind};
 
 // Given a path spec (glob), find all the files where their content is like (something) and return abstracted types
 
+// [x] give the search function a fn to call for each result, rather that having it collect all of the
+//    results
+// [] command-line
+// [] metrics: file and line counts
+// [x] glob
+// [] regex
+// [] multi-threaded
+// [] perf monitoring
+
+enum Query {
+    String(String),
+    Regex(Regex),
+}
+
 pub fn main() {
+    // let re = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
+    let re = Regex::new(r"Ga..ett").unwrap();
+    // assert!(re.is_match("2014-01-01"));
+
+    // Garrett
+    // Garnett
     println!("grep");
-    // let paths = fs::read_dir(".").unwrap();
-    // for path in paths {
-    //     println!("{:?}", path);
-    // }
-
-    let paths = fs::read_dir(".")
-        .unwrap()
-        .map(Result::unwrap)
-        .map(|dir_entry| dir_entry.path())
-        .collect::<Vec<_>>();
-
-    // println!("here");
-    //     use glob::glob;
-    //     println!();
-    //     // "/media/**/*.jpg"
-    //     for entry in glob("src/*.rs").expect("Failed to read glob pattern") {
-    //         match entry {
-    //             Ok(path) => println!("{:?}", path.display()),
-    //             Err(e) => println!("{:?}", e),
-    //         }
-    //     }
-
-    for path in paths {
-        // print!("x");
-
-        if let Ok(hits) = search_in(&path, "smallvec") {
-            for hit in hits {
-                print!("{}", hit);
-            }
+    // "/media/**/*.jpg"
+    // match search(&Query::String(String::from("fn")), glob("src/*.rs"), &{
+    match search(&Query::Regex(re), glob("src/*.rs"), &{
+        |hit: &str| print!("{}", hit)
+    }) {
+        Ok((num_hits, num_files, num_lines)) => {
+            println!(
+                "\nfin: {} hits in {} files with {} total lines.",
+                num_hits, num_files, num_lines
+            );
         }
+        Err(err) => println!("err: {}", err),
     }
 }
 
-// use std::fs::File;
-// use std::io::{BufRead, BufReader, Error};
-use std::io::{Error, ErrorKind};
+fn search(
+    query: &Query,
+    paths: Result<Paths, PatternError>,
+    on_hit: &dyn Fn(&str),
+) -> Result<(usize, usize, usize), Error> {
+    let mut num_hits = 0;
+    let mut num_lines = 0;
+    let mut num_files = 0;
+    for entry in paths.expect("Failed to read glob pattern") {
+        match entry {
+            Ok(path) => {
+                num_files += 1;
+                if let Ok((hits, lines_searched)) = search_in(&path, query) {
+                    num_hits += hits.len();
+                    num_lines += lines_searched;
+                    for hit in hits {
+                        on_hit(&hit);
+                    }
+                }
+            }
+            Err(e) => println!("{:?}", e),
+        }
+    }
 
-fn search_in(path: &std::path::PathBuf, term: &str) -> Result<Vec<String>, Error> {
+    Ok((num_hits, num_files, num_lines))
+}
+
+#[test]
+fn test_search() {
+    let _ = search(
+        &Query::String(String::from("something")),
+        glob("src/*.rs"),
+        &{ |hit: &str| println!("HIT : {}", hit) },
+    );
+}
+
+fn search_in(path: &std::path::PathBuf, query: &Query) -> Result<(Vec<String>, usize), Error> {
     let mut hits = vec![];
+    let mut num_lines = 0;
 
     if path.is_dir() {
         return Err(Error::new(ErrorKind::Other, "Path is directory"));
@@ -53,9 +93,18 @@ fn search_in(path: &std::path::PathBuf, term: &str) -> Result<Vec<String>, Error
 
         while let Some(line) = reader.read_line(&mut buffer) {
             if let Ok(line) = line {
-                if line.contains(term) {
-                    hits.push(line.clone());
-                    // println!("FOUND{}", line.trim());
+                num_lines += 1;
+                match query {
+                    Query::String(term) => {
+                        if line.contains(term) {
+                            hits.push(line.clone());
+                        }
+                    }
+                    Query::Regex(regex) => {
+                        if regex.is_match(line) {
+                            hits.push(line.clone());
+                        }
+                    }
                 }
             } else {
                 // println!("{:?}", line.err());
@@ -63,35 +112,8 @@ fn search_in(path: &std::path::PathBuf, term: &str) -> Result<Vec<String>, Error
         }
     }
 
-    Ok(hits)
+    Ok((hits, num_lines))
 }
-
-// File Read/Write
-// use std::fs::File;
-// use std::io::{Write, BufReader, BufRead, Error};
-
-// fn main() -> Result<(), Error> {
-//     let path = "lines.txt";
-
-//     let mut output = File::create(path)?;
-//     write!(output, "Rust\n💖\nFun")?;
-
-//     let input = File::open(path)?;
-//     let buffered = BufReader::new(input);
-
-//     for line in buffered.lines() {
-//         println!("{}", line?);
-//     }
-
-//     Ok(())
-// }
-
-// pub fn files(path: &str) -> Vec<fs::DirEntry> {
-// fs::read_dir(".")
-//     .unwrap()
-//     // .filter_map(|f| f.unwrap())
-//     .collect::<Vec<_>>()
-// }
 
 // from https://stackoverflow.com/questions/45882329/read-large-files-line-by-line-in-rust
 mod my_reader {
