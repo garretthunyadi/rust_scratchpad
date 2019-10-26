@@ -12,6 +12,7 @@ mod channels;
 mod corpus;
 mod docs;
 mod ecs;
+mod grep;
 mod hashing;
 mod headless_screenshot;
 mod iterator;
@@ -48,7 +49,8 @@ macro_rules! s {
 }
 
 fn main() -> Result<(), std::io::Error> {
-    mutex::main();
+    grep::main();
+    // mutex::main();
     // states::main()?;
     // channels::main()?;
     // markov_chain4::main()?;
