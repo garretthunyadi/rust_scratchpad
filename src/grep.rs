@@ -3,21 +3,6 @@ use std::fs;
 // Given a path spec (glob), find all the files where their content is like (something) and return abstracted types
 
 pub fn main() {
-    // let data = fs::read_to_string("/etc/hosts").expect("Unable to read file");
-    // println!("{}", data);
-
-    // let strings = vec!["tofu", "93", "18"];
-    // let numbers: Result<Vec<_>, _> = strings.into_iter().map(|s| s.parse::<i32>()).collect();
-    // println!("Results: {:?}", numbers);
-
-    // let strings = vec!["tofu", "93", "18"];
-    // let numbers: Vec<_> = strings
-    //     .into_iter()
-    //     .map(|s| s.parse::<i32>())
-    //     .filter_map(Result::ok)
-    //     .collect();
-    // println!("Results: {:?}", numbers);
-
     println!("grep");
     // let paths = fs::read_dir(".").unwrap();
     // for path in paths {
@@ -30,7 +15,7 @@ pub fn main() {
         .map(|dir_entry| dir_entry.path())
         .collect::<Vec<_>>();
 
-    println!("here");
+    // println!("here");
     //     use glob::glob;
     //     println!();
     //     // "/media/**/*.jpg"
@@ -42,59 +27,43 @@ pub fn main() {
     //     }
 
     for path in paths {
-        print!("x");
+        // print!("x");
 
-        if let Ok(found) = search_in(&path, "foo") {
-            if found {
-                println!("================= hit: {:?} ======================", path);
-            } else {
-                print!(".");
+        if let Ok(hits) = search_in(&path, "smallvec") {
+            for hit in hits {
+                print!("{}", hit);
             }
         }
     }
-    println!("fin");
-
-    //     let r = glob("*").unwrap();
 }
 
 // use std::fs::File;
 // use std::io::{BufRead, BufReader, Error};
 use std::io::{Error, ErrorKind};
 
-fn search_in(path: &std::path::PathBuf, to_match: &str) -> Result<bool, Error> {
+fn search_in(path: &std::path::PathBuf, term: &str) -> Result<Vec<String>, Error> {
+    let mut hits = vec![];
+
     if path.is_dir() {
-        print!("<dir>");
         return Err(Error::new(ErrorKind::Other, "Path is directory"));
     }
-    print!("a");
 
-    // let input = File::open(path)?;
-    // let buffered = BufReader::new(input);
-
-    // let mut cnt = 0;
-    // for line in buffered.lines() {
-    //     // println!("{}", line?);
-    //     cnt += 1;
-    // }
-    // println!("{}\t{:?}", cnt, path);
-    // Ok(false)
     if let Ok(mut reader) = my_reader::BufReader::open(path) {
-        println!("b");
-
         let mut buffer = String::new();
 
         while let Some(line) = reader.read_line(&mut buffer) {
-            println!("c");
-
             if let Ok(line) = line {
-                println!("OK: {}", line.trim());
+                if line.contains(term) {
+                    hits.push(line.clone());
+                    // println!("FOUND{}", line.trim());
+                }
             } else {
-                println!("{:?}", line.err());
+                // println!("{:?}", line.err());
             }
         }
     }
 
-    Ok(true)
+    Ok(hits)
 }
 
 // File Read/Write
