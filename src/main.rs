@@ -10,6 +10,7 @@ extern crate rand;
 mod bayes;
 mod channels;
 mod corpus;
+mod cyoa;
 mod docs;
 mod ecs;
 mod grep;
@@ -24,6 +25,7 @@ mod markov_chain1;
 mod markov_chain2;
 mod markov_chain4;
 mod mutex;
+mod random;
 mod rc_arc;
 mod rust_book;
 mod scans3;
@@ -49,7 +51,9 @@ macro_rules! s {
 }
 
 fn main() -> Result<(), std::io::Error> {
-    grep::main();
+    cyoa::main();
+    // random::main();
+    // grep::main();
     // mutex::main();
     // states::main()?;
     // channels::main()?;

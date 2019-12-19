@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 rand="0.7.0"
+rand_distr="0.2.2"
 crc = "^1.0.0"
 specs = "0.14.0"
 specs-derive = "0.4.0"
