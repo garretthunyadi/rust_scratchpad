@@ -7,6 +7,8 @@ extern crate specs_derive;
 
 extern crate rand;
 
+mod async_await;
+mod async_await2;
 mod bayes;
 mod channels;
 mod corpus;
@@ -41,8 +43,11 @@ use std::fs;
 use std::sync::mpsc;
 use std::thread;
 // use std::time::Duration;
+use futures::executor::block_on;
+use futures::join;
 use std::fmt;
 use std::sync::{Arc, Mutex};
+use std::time;
 
 macro_rules! s {
     ($val: expr) => {
@@ -50,8 +55,24 @@ macro_rules! s {
     };
 }
 
+async fn async_mains() {
+    // this will block at each step, so not run things concurrently
+    // async_await::async_main().await;
+    // cyoa::main().await;
+
+    // let f2 = cyoa::main();
+    // let f1 = async_await::async_main();
+    // let f3 = cyoa::main();
+    // let f4 = async_await::async_main();
+
+    // futures::join!(f1, f2, f3, f4);
+}
+
 fn main() -> Result<(), std::io::Error> {
-    cyoa::main();
+    async_await2::main();
+    // block_on(async_main());
+    // block_on(async_mains());
+    // cyoa::main();
     // random::main();
     // grep::main();
     // mutex::main();

@@ -2,7 +2,7 @@ extern crate rand;
 use rand::distributions::{Distribution, Uniform};
 use std::fmt;
 
-pub fn main() {
+pub async fn main() {
     println!("cyoa/main");
     let mut story = Story::start();
     while !story.is_fin() {
