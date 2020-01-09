@@ -46,7 +46,6 @@ pub fn rc_arc_properties() {
     */
     //
     // but Rc's can outlive the creator's scope.
-    // I.e. God is dead.
     {
         let rc;
         {

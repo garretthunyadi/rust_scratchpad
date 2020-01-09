@@ -22,6 +22,7 @@ mod iterator;
 mod iterator_impl_1;
 mod iterator_impl_2;
 mod linked_list;
+mod macros;
 mod markov_chain;
 mod markov_chain1;
 mod markov_chain2;
@@ -68,33 +69,33 @@ async fn async_mains() {
     // futures::join!(f1, f2, f3, f4);
 }
 
-fn main() -> Result<(), std::io::Error> {
-    async_await2::main();
-    // block_on(async_main());
-    // block_on(async_mains());
-    // cyoa::main();
-    // random::main();
-    // grep::main();
-    // mutex::main();
-    // states::main()?;
-    // channels::main()?;
-    // markov_chain4::main()?;
-    // rc_arc::main()?;
-    // rust_book::boxes::main()?;
-    // markov_chain::examples::bigram_markov_chain_example::main()?;
-    // markov_chain::examples::coin_bets::main()?;
-    // markov_chain::examples::main()?;
-    // markov_chain::main()?;
-    // markov_chain1::main()?;
-    // markov_chain2::main()?;
-    // threads_1::main()?;
-    // bayes::main()?;
-    // typed_bayes::main()?;
-    // iterator_impl_1::main()?;
-    // iterator_impl_2::main()?;
-    //     scans4::main()?; //.or_else(|err| Err(s!(err)));
-    Ok(())
-}
+// fn main() -> Result<(), std::io::Error> {
+// async_await2::main();
+// block_on(async_main());
+// block_on(async_mains());
+// cyoa::main();
+// random::main();
+// grep::main();
+// mutex::main();
+// states::main()?;
+// channels::main()?;
+// markov_chain4::main()?;
+// rc_arc::main()?;
+// rust_book::boxes::main()?;
+// markov_chain::examples::bigram_markov_chain_example::main()?;
+// markov_chain::examples::coin_bets::main()?;
+// markov_chain::examples::main()?;
+// markov_chain::main()?;
+// markov_chain1::main()?;
+// markov_chain2::main()?;
+// threads_1::main()?;
+// bayes::main()?;
+// typed_bayes::main()?;
+// iterator_impl_1::main()?;
+// iterator_impl_2::main()?;
+//     scans4::main()?; //.or_else(|err| Err(s!(err)));
+//     Ok(())
+// }
 
 // fn main() -> Result<(), String> {
 //     corpus::main().or_else(|err| Err(s!(err)))
@@ -103,43 +104,43 @@ fn main() -> Result<(), std::io::Error> {
 //     hashing::main()
 // }
 
-// fn main() {
-// let _ = bayes::main();
-// scratch::main();
-// headless_screenshot::main();
-// ecs::main();
-// }
-// scratch::main();
-// main1();
-// traits1();
-// scans1();
-// locks1();
-// threads1();
-// channels1();
-// mutex1();
-// docs_main();
-// iter();
-// specific();
-// state_machine();
-// run_story();
-// generics();
-// polymorphism();
-// monomorphism();
-// scans2::scan_states();
-// scans3::main();
-// maybies();
-// default::main();
-// getters::main()?;
-// linked_list::main();
-// sliding_log::main();
-// iterator::main();
-// match corpus::main() {
-//     Ok(()) => Ok(()),
-//     Err(err) => Err(err.to_string()),
-// }
-// corpus::main().or_else(|err| Err(err.to_string()))
-
-// }
+fn main() {
+    macros::main();
+    // let _ = bayes::main();
+    // scratch::main();
+    // headless_screenshot::main();
+    // ecs::main();
+    // }
+    // scratch::main();
+    // main1();
+    // traits1();
+    // scans1();
+    // locks1();
+    // threads1();
+    // channels1();
+    // mutex1();
+    // docs_main();
+    // iter();
+    // specific();
+    // state_machine();
+    // run_story();
+    // generics();
+    // polymorphism();
+    // monomorphism();
+    // scans2::scan_states();
+    // scans3::main();
+    // maybies();
+    // default::main();
+    // getters::main()?;
+    // linked_list::main();
+    // sliding_log::main();
+    // iterator::main();
+    // match corpus::main() {
+    //     Ok(()) => Ok(()),
+    //     Err(err) => Err(err.to_string()),
+    // }
+    // corpus::main().or_else(|err| Err(err.to_string()))
+}
 
 fn specific() {
     let mut state = ASpecificStateMachine::start();
