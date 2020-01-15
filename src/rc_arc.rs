@@ -217,11 +217,11 @@ pub fn rc_arc_properties() {
             // let big_thing = &mut **clone1;
             // big_thing.size = 1_000_001;
         });
-        let clone2 = arc_of_box.clone();
+        // let clone2 = arc_of_box.clone();
 
         thread::spawn(move || {
             // println!("{:?}", arc_of_box);
-            println!("Clone2: {:?}", clone2);
+            println!("Clone2: {:?}", arc_of_box);
         });
     }
 }

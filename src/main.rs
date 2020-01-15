@@ -1,3 +1,4 @@
+// #![feature(trace_macros, log_syntax)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unused_macros)]
@@ -9,11 +10,13 @@ extern crate rand;
 
 mod async_await;
 mod async_await2;
+mod async_stream;
 mod bayes;
 mod channels;
 mod corpus;
 mod cyoa;
 mod docs;
+mod domain_info_crate;
 mod ecs;
 mod grep;
 mod hashing;
@@ -21,6 +24,7 @@ mod headless_screenshot;
 mod iterator;
 mod iterator_impl_1;
 mod iterator_impl_2;
+mod json_macro;
 mod linked_list;
 mod macros;
 mod markov_chain;
@@ -39,16 +43,13 @@ mod states;
 mod threads_0;
 mod threads_1;
 mod typed_bayes;
+mod wappalyzer_crate;
 
+use std::fmt;
 use std::fs;
 use std::sync::mpsc;
-use std::thread;
-// use std::time::Duration;
-use futures::executor::block_on;
-use futures::join;
-use std::fmt;
 use std::sync::{Arc, Mutex};
-use std::time;
+use std::thread;
 
 macro_rules! s {
     ($val: expr) => {
@@ -56,18 +57,18 @@ macro_rules! s {
     };
 }
 
-async fn async_mains() {
-    // this will block at each step, so not run things concurrently
-    // async_await::async_main().await;
-    // cyoa::main().await;
+// async fn async_mains() {
+// this will block at each step, so not run things concurrently
+// async_await::async_main().await;
+// cyoa::main().await;
 
-    // let f2 = cyoa::main();
-    // let f1 = async_await::async_main();
-    // let f3 = cyoa::main();
-    // let f4 = async_await::async_main();
+// let f2 = cyoa::main();
+// let f1 = async_await::async_main();
+// let f3 = cyoa::main();
+// let f4 = async_await::async_main();
 
-    // futures::join!(f1, f2, f3, f4);
-}
+// futures::join!(f1, f2, f3, f4);
+// }
 
 // fn main() -> Result<(), std::io::Error> {
 // async_await2::main();
@@ -104,43 +105,51 @@ async fn async_mains() {
 //     hashing::main()
 // }
 
-fn main() {
-    macros::main();
-    // let _ = bayes::main();
-    // scratch::main();
-    // headless_screenshot::main();
-    // ecs::main();
-    // }
-    // scratch::main();
-    // main1();
-    // traits1();
-    // scans1();
-    // locks1();
-    // threads1();
-    // channels1();
-    // mutex1();
-    // docs_main();
-    // iter();
-    // specific();
-    // state_machine();
-    // run_story();
-    // generics();
-    // polymorphism();
-    // monomorphism();
-    // scans2::scan_states();
-    // scans3::main();
-    // maybies();
-    // default::main();
-    // getters::main()?;
-    // linked_list::main();
-    // sliding_log::main();
-    // iterator::main();
-    // match corpus::main() {
-    //     Ok(()) => Ok(()),
-    //     Err(err) => Err(err.to_string()),
-    // }
-    // corpus::main().or_else(|err| Err(err.to_string()))
+#[tokio::main]
+async fn main() {
+    async_stream::main();
+    // wappalyzer_crate::main().await;
+    // domain_info_crate::main();
 }
+
+// fn main() {
+// json_macro::main(); // not done
+// macros::main();
+// let _ = bayes::main();
+// scratch::main();
+// headless_screenshot::main();
+// ecs::main();
+// }
+// scratch::main();
+// main1();
+// traits1();
+// scans1();
+// locks1();
+// threads1();
+// channels1();
+// mutex1();
+// docs_main();
+// iter();
+// specific();
+// state_machine();
+// run_story();
+// generics();
+// polymorphism();
+// monomorphism();
+// scans2::scan_states();
+// scans3::main();
+// maybies();
+// default::main();
+// getters::main()?;
+// linked_list::main();
+// sliding_log::main();
+// iterator::main();
+// match corpus::main() {
+//     Ok(()) => Ok(()),
+//     Err(err) => Err(err.to_string()),
+// }
+// corpus::main().or_else(|err| Err(err.to_string()))
+// }
 
 fn specific() {
     let mut state = ASpecificStateMachine::start();

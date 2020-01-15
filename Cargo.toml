@@ -17,3 +17,7 @@ futures = "0.3.1"
 num_cpus = "1.0"
 glob = "0.3"
 regex = "1"
+domain_info = "0.1.1"
+wappalyzer = "0.1.0"
+tokio = { version = "0.2", features = ["full"] }
+url = "2.1.1"
