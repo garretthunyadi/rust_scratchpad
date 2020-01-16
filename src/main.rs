@@ -10,7 +10,6 @@ extern crate rand;
 
 mod async_await;
 mod async_await2;
-mod async_stream;
 mod bayes;
 mod channels;
 mod corpus;
@@ -24,7 +23,6 @@ mod headless_screenshot;
 mod iterator;
 mod iterator_impl_1;
 mod iterator_impl_2;
-mod json_macro;
 mod linked_list;
 mod macros;
 mod markov_chain;
@@ -107,8 +105,8 @@ macro_rules! s {
 
 #[tokio::main]
 async fn main() {
-    async_stream::main();
-    // wappalyzer_crate::main().await;
+    // async_stream::main();
+    wappalyzer_crate::main().await;
     // domain_info_crate::main();
 }
 
