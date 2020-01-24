@@ -1,187 +1,239 @@
+// [x] Display list
+// [x] Keep a ref to the tail as an optimization
+// [x] Functionality to change values in the LL
+
+// #![feature(test)]
+// extern crate test;
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
 pub fn main() {
-    println!("linked list");
+    puts!("Linked List");
 
-    let mut log = TxLog::new_empty();
-    assert_eq!(log.pop_head(), None);
+    let mut list = LL::new(10);
+    println!("{}", list);
+    list.add(20);
+    println!("{}", list);
+    list.add(30);
+    println!("{}", list);
 
-    log.append_to_end(1);
-    assert_eq!(log.pop_head(), Some(1));
-    // assert_eq!(log.pop_head(), None);
+    let iter = LLIterator::new(&list);
+    for i in iter {
+        println!("- {}", i);
+    }
 
-    // log.append_to_end(2);
-    // assert_eq!(log.pop_head(), Some(2));
-    // assert_eq!(log.pop_head(), None);
-
-    // log.append_to_end(3);
-    // log.append_to_end(4);
-    // assert_eq!(log.pop_head(), Some(3));
-    // assert_eq!(log.pop_head(), Some(4));
-    // assert_eq!(log.pop_head(), None);
+    // mutate
+    list.nth(1).unwrap().val = 21;
+    println!("{:?}", list.values());
+    LL::set(&mut list.head.clone().unwrap(), 11);
+    println!("{:?}", list.values());
 }
 
-type SingleLink = Option<Rc<RefCell<Node>>>;
+// A link is differs from a node as the link has
+// the option+ref counting+ ref cell mechanisms.
+type Link<T> = Rc<RefCell<Node<T>>>;
 
 #[derive(Clone)]
-struct Node {
-    val: i32,
-    next: SingleLink,
+struct Node<T: Copy> {
+    val: T,
+    next: Option<Link<T>>,
 }
-impl Node {
-    fn new(val: i32) -> Rc<RefCell<Node>> {
-        Rc::new(RefCell::new(Node { val, next: None }))
-    }
-}
-
-struct TxLog {
-    head: SingleLink,
-    tail: SingleLink,
-    pub length: u64,
-}
-impl TxLog {
-    pub fn new_empty() -> TxLog {
-        TxLog {
-            head: None,
-            tail: None,
-            length: 0,
-        }
-    }
-    pub fn append_to_end(&mut self, val: i32) {
-        let new = Node::new(val);
-        match self.tail.take() {
-            Some(old) => old.borrow_mut().next = Some(new.clone()),
-            None => self.head = Some(new.clone()),
-        }
-        self.length += 1;
-        self.tail = Some(new);
+impl<T: Copy> Node<T> {
+    fn new(val: T) -> Node<T> {
+        Node { val, next: None }
     }
 
-    #[allow(clippy::option_map_unit_fn)]
-    pub fn pop_head(&mut self) -> Option<i32> {
-        self.head.take().map(|head| {
-            if let Some(next) = head.borrow_mut().next.take() {
-                self.head = Some(next);
+    // helper - 0-based
+    fn nth(&self, n: u32) -> Option<Node<T>> {
+        if n == 0 {
+            return Some(self.clone());
+        }
+
+        let mut curr = self.next.clone();
+        for _ in 1..n {
+            if let Some(node) = curr.clone() {
+                curr = node.borrow().next.clone();
             } else {
-                self.tail.take();
+                return None;
             }
-            self.length -= 1;
-            Rc::try_unwrap(head)
-                .ok()
-                .expect("Something is wrong.")
-                .into_inner()
-                .val
-            })
+        }
+
+        Some(curr.unwrap().borrow().clone())
     }
-    // pub fn append_to_top(&mut self, val: i32) {
-    //     let new_link = Node::new(val);
-    //     if self.head.is_none() {
-    //         assert!(self.tail.is_none());
-    //         // head and tail should be set to the new value
-    //         self.head = Some(new_link.clone());
-    //         self.tail = Some(new_link.clone());
-    //     } else {
-    //         assert!(self.tail.is_some());
-    //         // head is replaced with a new head, contining
-    //         // the new val and pointing to the old head.
-    //         // the tail is unchanged
-    //         new_link.borrow_mut().next = self.head.clone();
-    //         // let prev_head = self.head.clone();
-    //         // new_link.unwrap().borrow_mut().next = prev_head;
-    //         self.head = new_link;
-    //     }
-    // }
-    // pub fn pop_from_bottom(&mut self) -> Option<i32> {
-    //     None
-    // }
+
+    // helper
+    fn new_link(val: T) -> Rc<RefCell<Node<T>>> {
+        Rc::new(RefCell::new(Node::new(val)))
+    }
 }
 
-// pub fn main() {
-//     println!("linked list");
-//     let mut head = Link { val: 4, next: None };
-//     let next = Link { val: 5, next: None };
-//     head.next = Some(Rc::new(RefCell::new(next)));
-//     assert_eq!(head.val, 4);
-//     assert_eq!(head.next.unwrap().borrow().val, 5);
+struct LL<T: Copy> {
+    head: Option<Link<T>>,
+    tail: Option<Link<T>>,
+}
+impl<T: Copy> LL<T> {
+    fn new(val: T) -> LL<T> {
+        let link = Some(Node::new_link(val));
+        LL {
+            head: link.clone(),
+            tail: link,
+        }
+    }
 
-//     // head.next.unwrap().borrow_mut().next = Some(Rc::new(RefCell::new(Link{val:6,next:None})));
-//     let mut head = Link::new(11);
-//     head.attach(12);
-//     assert_eq!(head.val, 11);
+    fn add(&mut self, val: T) {
+        assert!(self.head.is_some());
+        assert!(self.tail.is_some());
 
-//     assert_eq!(head.next().unwrap().borrow().val, 12);
-//     head.attach(13);
+        let tail = self.tail.clone().unwrap();
+        let mut tail = tail.borrow_mut();
 
-//     //
-//     //
-//     println!("const log");
-//     let mut list: List<u32> = List::new();
-//     list.push(0);
-//     assert_eq!(*list.at(0), 0);
-//     list.push(1);
-//     assert_eq!(*list.at(1), 1);
-//     list.push(2);
-//     assert_eq!(*list.at(2), 2);
-// }
+        let new_link = Some(Node::new_link(val));
+        tail.next = new_link.clone();
+        // update the tail pointer
+        self.tail = new_link;
+    }
 
-// pub struct List<T> {
-//     head: Option<Link<T>>,
-//     // tail: Option<Link<T>>,
-// }
-// impl<T> List<T> {
-//     pub fn new() -> List<T> {
-//         List { head: None }
-//     }
-//     pub fn push(&mut self, val: T) {
-//         self.head = match &self.head {
-//             None => Some(Link::new(val)),
-//             Some(link) => Some(Link::new_with_next_link(val, link.next.clone())),
-//         }
-//     }
-//     pub fn at(&self, i: usize) -> &T {
-//         let mut curr = self.head.or(None);
-//         for _ in 0..i {
-//             if curr.is_none() {
-//                 break;
-//             } else {
-//                 curr = curr.clone().unwrap().next;
-//             }
-//         }
-//         let x = &self.head;
-//         let y = x.as_ref().unwrap();
-//         y.val()
-//     }
-// }
-// type Next<T> = Option<Rc<RefCell<Link<T>>>>;
+    // helper
+    fn next(link: Link<T>) -> Option<Link<T>> {
+        link.borrow().next.clone()
+    }
 
-// pub struct Link<T> {
-//     val: T,
-//     next: Next<T>,
-// }
+    // helper
+    fn nth(&self, n: u32) -> Option<Node<T>> {
+        let link;
+        if let Some(head) = &self.head {
+            link = Node::nth(&head.borrow(), n)
+        } else {
+            link = None
+        }
+        link
+    }
 
-// impl<T> Link<T> {
-//     pub fn new(val: T) -> Self {
-//         Self { val, next: None }
-//     }
-//     pub fn new_with_next_link(val: T, next: Next<T>) -> Self {
-//         Self { val, next }
-//     }
-//     pub fn val(&self) -> &T {
-//         &self.val
-//     }
-//     pub fn next(&self) -> Next<T> {
-//         self.next.clone()
-//     }
-//     pub fn attach(&mut self, val: T) {
-//         let mut new_node = Link::new(val);
-//         new_node.next = match &self.next {
-//             Some(rc) => Some(rc.clone()),
-//             None => None,
-//         };
-//         self.next = Some(Rc::new(RefCell::new(new_node)));
-//     }
-//     pub fn push(&mut self, val: T) {
-//         self.attach(val)
-//     }
-// }
+    // helper
+    fn values(&self) -> Vec<T> {
+        let mut vals = vec![];
+        let mut link = self.head.clone();
+        while link.is_some() {
+            vals.push(link.clone().unwrap().borrow().val);
+            link = LL::next(link.unwrap());
+        }
+        vals
+    }
+
+    // helper
+    fn set(link: &mut Link<T>, val: T) {
+        link.borrow_mut().val = val;
+    }
+}
+
+impl<T: Copy + std::fmt::Debug> std::fmt::Display for LL<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.values())
+    }
+}
+
+struct LLIterator<'a, T: Copy> {
+    ll: &'a LL<T>,
+    curr: Option<Link<T>>,
+}
+impl<'a, T: Copy> LLIterator<'a, T> {
+    fn new(ll: &'a LL<T>) -> LLIterator<T> {
+        LLIterator {
+            ll,
+            curr: ll.head.clone(),
+        }
+    }
+    fn value(&self) -> Option<T> {
+        match &self.curr {
+            Some(cell) => Some(cell.borrow().val),
+            None => None,
+        }
+    }
+}
+
+impl<'a, T: Copy> Iterator for LLIterator<'a, T> {
+    // type Item = Rc<RefCell<Node<T>>>;
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        let val = match &self.curr {
+            Some(_) => {
+                // self.curr = cell.borrow().next;
+                self.value()
+            }
+            None => None,
+        };
+
+        // we have some value, therefore there is something following it
+        // in the list (though this coould be a 'None' option). Now we 'advance'
+        // the curr pointer
+        if val.is_some() {
+            let nxt = self.curr.clone().unwrap().borrow().next.clone();
+            self.curr = nxt;
+        }
+        val
+    }
+}
+
+impl<'a, T: Copy> std::ops::Deref for LLIterator<'a, T> {
+    type Target = LL<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.ll
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ll_basic() {
+        let mut ll = LL::new(111);
+        assert_eq!(ll.values(), vec![111]);
+        ll.add(222);
+        assert_eq!(ll.values(), vec![111, 222]);
+        ll.add(333);
+        assert_eq!(ll.values(), vec![111, 222, 333]);
+    }
+
+    #[test]
+    fn test_nth() {
+        let mut first = Node::new(11);
+        let second = Node::new_link(22);
+        first.next = Some(second.clone());
+        let third = Node::new_link(33);
+        second.borrow_mut().next = Some(third);
+
+        assert_eq!(first.nth(0).unwrap().val, 11);
+        assert_eq!(first.nth(1).unwrap().val, 22);
+        assert_eq!(first.nth(2).unwrap().val, 33);
+    }
+
+    #[test]
+    fn iter_basic() {
+        let mut ll = LL::new(111);
+        ll.add(222);
+        ll.add(333);
+        let mut iter = LLIterator::new(&ll);
+        assert_eq!(iter.next(), Some(111));
+        assert_eq!(iter.next(), Some(222));
+        assert_eq!(iter.next(), Some(333));
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn iter_mutation() {
+        let mut ll = LL::new(111);
+        ll.add(222);
+        ll.add(333);
+        let mut iter = LLIterator::new(&ll);
+        iter.next();
+        assert_eq!(iter.value(), Some(222));
+        LL::set(&mut iter.curr.unwrap(), 2222);
+        let mut iter = LLIterator::new(&ll);
+        iter.next();
+        assert_eq!(iter.value(), Some(2222));
+    }
+}

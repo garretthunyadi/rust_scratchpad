@@ -6,6 +6,9 @@
 #[macro_use]
 extern crate specs_derive;
 
+#[macro_use]
+mod macros;
+
 extern crate rand;
 
 mod async_await;
@@ -24,7 +27,7 @@ mod iterator;
 mod iterator_impl_1;
 mod iterator_impl_2;
 mod linked_list;
-mod macros;
+mod ll_tx_log;
 mod markov_chain;
 mod markov_chain1;
 mod markov_chain2;
@@ -103,51 +106,52 @@ macro_rules! s {
 //     hashing::main()
 // }
 
-#[tokio::main]
-async fn main() {
-    // async_stream::main();
-    wappalyzer_crate::main().await;
-    // domain_info_crate::main();
-}
+// #[tokio::main]
+// async fn main() {
+//     // async_stream::main();
+//     wappalyzer_crate::main().await;
+//     // domain_info_crate::main();
+// }
 
-// fn main() {
-// json_macro::main(); // not done
-// macros::main();
-// let _ = bayes::main();
-// scratch::main();
-// headless_screenshot::main();
-// ecs::main();
-// }
-// scratch::main();
-// main1();
-// traits1();
-// scans1();
-// locks1();
-// threads1();
-// channels1();
-// mutex1();
-// docs_main();
-// iter();
-// specific();
-// state_machine();
-// run_story();
-// generics();
-// polymorphism();
-// monomorphism();
-// scans2::scan_states();
-// scans3::main();
-// maybies();
-// default::main();
-// getters::main()?;
-// linked_list::main();
-// sliding_log::main();
-// iterator::main();
-// match corpus::main() {
-//     Ok(()) => Ok(()),
-//     Err(err) => Err(err.to_string()),
-// }
-// corpus::main().or_else(|err| Err(err.to_string()))
-// }
+fn main() {
+    // json_macro::main(); // not done
+    // macros::main();
+    // let _ = bayes::main();
+    // scratch::main();
+    // headless_screenshot::main();
+    // ecs::main();
+    // }
+    // scratch::main();
+    // main1();
+    // traits1();
+    // scans1();
+    // locks1();
+    // threads1();
+    // channels1();
+    // mutex1();
+    // docs_main();
+    // iter();
+    // specific();
+    // state_machine();
+    // run_story();
+    // generics();
+    // polymorphism();
+    // monomorphism();
+    // scans2::scan_states();
+    // scans3::main();
+    // maybies();
+    // default::main();
+    // getters::main()?;
+    // linked_list::main();
+    ll_tx_log::main();
+    // sliding_log::main();
+    // iterator::main();
+    // match corpus::main() {
+    //     Ok(()) => Ok(()),
+    //     Err(err) => Err(err.to_string()),
+    // }
+    // corpus::main().or_else(|err| Err(err.to_string()))
+}
 
 fn specific() {
     let mut state = ASpecificStateMachine::start();
