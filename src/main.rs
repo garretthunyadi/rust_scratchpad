@@ -27,6 +27,7 @@ mod iterator;
 mod iterator_impl_1;
 mod iterator_impl_2;
 mod linked_list;
+mod ll2;
 mod ll_tx_log;
 mod markov_chain;
 mod markov_chain1;
@@ -34,6 +35,7 @@ mod markov_chain2;
 mod markov_chain4;
 mod mutex;
 mod random;
+mod rc2;
 mod rc_arc;
 mod rust_book;
 mod scans3;
@@ -143,7 +145,7 @@ fn main() {
     // default::main();
     // getters::main()?;
     // linked_list::main();
-    ll_tx_log::main();
+    // ll_tx_log::main();
     // sliding_log::main();
     // iterator::main();
     // match corpus::main() {
@@ -151,6 +153,7 @@ fn main() {
     //     Err(err) => Err(err.to_string()),
     // }
     // corpus::main().or_else(|err| Err(err.to_string()))
+    ll2::main().unwrap();
 }
 
 fn specific() {

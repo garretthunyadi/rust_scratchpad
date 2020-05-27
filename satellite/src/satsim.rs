@@ -4,6 +4,7 @@ use std::thread;
 use std::time::Duration;
 
 mod batsim;
+use super::proxy::SatelliteProxy;
 use batsim::*;
 
 pub fn main() -> Result<(), Error> {
@@ -49,12 +50,12 @@ impl Percent {
 type PartId = String;
 
 #[derive(Clone, Debug, PartialEq)]
-enum SatEvent {
+pub enum SatEvent {
     BatteryStateChange(PartId, Percent),
     Anomaly(PartId, String),
 }
 
-struct SatSim {
+pub struct SatSim {
     bat_1_part_id: String,
     // batsim: batsim::BatSim, // how will I communicate to or kill this?
     bat_1_rx: std::sync::mpsc::Receiver<batsim::BatEvent>,
@@ -70,7 +71,7 @@ struct SatSim {
     _private: (),
 }
 impl SatSim {
-    fn new(comm_tx: std::sync::mpsc::Sender<SatEvent>) -> SatSim {
+    pub fn new(comm_tx: std::sync::mpsc::Sender<SatEvent>) -> SatSim {
         let (tx, bat_1_rx) = mpsc::channel();
         thread::spawn(move || {
             let mut batsim = BatSim::new(tx);
@@ -150,7 +151,9 @@ impl SatSim {
         }
     }
 }
-
+impl SatelliteProxy for SatSim {
+    fn calibrate(&mut self) {}
+}
 //
 //
 //

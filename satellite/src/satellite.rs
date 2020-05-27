@@ -1,8 +1,10 @@
-use std::io::{Error, ErrorKind};
 mod altitude;
 mod attitude;
 mod laser;
 mod power;
+
+use super::proxy::SatelliteProxy;
+use std::io::{Error, ErrorKind};
 
 fn error(msg: &str) -> Result<State, Error> {
     Err(Error::new(ErrorKind::Other, msg))
@@ -12,7 +14,12 @@ pub fn main() -> Result<(), Error> {
     use self::Instruction::*;
     use Event::*;
 
-    let mut s = Satellite::new();
+    struct StubSatProxy();
+    impl SatelliteProxy for StubSatProxy {
+        fn calibrate(&mut self) {}
+    }
+
+    let mut s = Satellite::new(&StubSatProxy());
     let good_event_set = vec![
         Instruction(Wake),
         PowerEvent(power::Event::Ready),
@@ -25,10 +32,10 @@ pub fn main() -> Result<(), Error> {
     ];
     let bad_event_set_1 = vec![Instruction(Wake), Instruction(Shoot)];
 
-    s.handle(&good_event_set)?;
-    let res = s.handle(&bad_event_set_1);
+    s.handle_events(&good_event_set)?;
+    let res = s.handle_events(&bad_event_set_1);
     println!("expect error: {:?}", res);
-    // let res = s.handle(&bad_event_set_2);
+    // let res = s.handle_events(&bad_event_set_2);
     // println!("expect error: {:?}", res);
     Ok(())
 }
@@ -57,16 +64,18 @@ pub enum Instruction {
 
 type Time = u128; // something like unix epoch, but maybe simplify to just monotonicall increasing houts
 
-pub struct Satellite {
+pub struct Satellite<'a> {
+    proxy: &'a dyn SatelliteProxy,
     _private: (), // prevent construction
     attitude: attitude::ControlUnit,
     altitude: altitude::ControlUnit,
     laser: laser::ControlUnit,
     power: power::ControlUnit,
 }
-impl Satellite {
-    pub fn new() -> Satellite {
+impl<'a> Satellite<'a> {
+    pub fn new(proxy: &'a dyn SatelliteProxy) -> Satellite<'a> {
         Satellite {
+            proxy,
             _private: (), // prevent construction
             attitude: attitude::ControlUnit::new(),
             altitude: altitude::ControlUnit::new(),
@@ -74,13 +83,13 @@ impl Satellite {
             power: power::ControlUnit::new(),
         }
     }
-    pub fn handle(&mut self, events: &Vec<Event>) -> Result<(), std::io::Error> {
+    pub fn handle_events(&mut self, events: &Vec<Event>) -> Result<(), std::io::Error> {
         for event in events {
             self.handle_event(event)?;
         }
         Ok(())
     }
-    fn handle_event(&mut self, event: &Event) -> Result<State, Error> {
+    pub fn handle_event(&mut self, event: &Event) -> Result<State, Error> {
         use self::Instruction::*;
         use Event::*;
         use State::*;
