@@ -23,6 +23,7 @@ mod ecs;
 mod grep;
 mod hashing;
 mod headless_screenshot;
+mod interior_mutability;
 mod iterator;
 mod iterator_impl_1;
 mod iterator_impl_2;
