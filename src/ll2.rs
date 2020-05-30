@@ -1,21 +1,32 @@
 use std::cell::RefCell;
+use std::fmt::{Display, Formatter, Result};
 use std::rc::Rc;
 
 pub fn main() -> std::io::Result<()> {
     println!("ll2");
 
-    // let mut list = LinkedList::new();
-    // list.prepend(1);
-    // list.append(2);
-    // let t = list.pop();
-    // let t = list.pop_from_end();
+    let mut llist: LinkedList<String> = LinkedList::new();
+    let list: &mut dyn StackPlus<_> = &mut llist;
+    assert_eq!(list.len(), 0);
 
+    list.push(s!("first"));
+    assert_eq!(list.len(), 1);
+
+    list.push(s!("second"));
+    assert_eq!(list.len(), 2);
+
+    list.push(s!("third"));
+    assert_eq!(list.len(), 3);
+
+    let val = list.pop();
+    assert_eq!(list.len(), 2);
+    assert_eq!(val, Some(s!("third")));
+
+    println!("{}", llist);
     Ok(())
 }
 
 trait StackPlus<T: Clone> {
-    // fn first(&self) -> Option<std::cell::Ref<T>>;
-    // fn last(&self) -> Option<T>;
     fn push(&mut self, v: T);
     // fn prepend(&mut self, v: T);
     fn pop(&mut self) -> Option<T>;
@@ -40,14 +51,37 @@ impl<T> Node<T> {
 
 struct LinkedList<T> {
     head: Option<Link<T>>,
-    len: usize,
 }
 
 impl<T> LinkedList<T> {
     fn new() -> LinkedList<T> {
-        LinkedList { head: None, len: 0 }
+        LinkedList { head: None }
+    }
+    fn replace_at(&mut self, index: usize, v: T) {
+        unimplemented!();
     }
 }
+impl<T: Display + Clone> Display for LinkedList<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut v = vec![];
+        for l in self {
+            v.push(l.to_string());
+        }
+        write!(f, "{}", v.join(" -> "))
+    }
+}
+
+impl<T: Clone> IntoIterator for &LinkedList<T> {
+    type Item = T;
+    type IntoIter = LLIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        LLIter {
+            curr: self.head.clone(),
+        }
+    }
+}
+
 impl<T: Clone> StackPlus<T> for LinkedList<T> {
     fn push(&mut self, v: T) {
         self.head = match &self.head {
@@ -57,29 +91,9 @@ impl<T: Clone> StackPlus<T> for LinkedList<T> {
                 Some(rc_node.clone()),
             )))),
         };
-        self.len += 1;
     }
-    // fn first(&self) -> Option<std::cell::Ref<T>> {
-    //     match &self.head {
-    //         None => None,
-    //         Some(rc_node) => Some(rc_node.borrow()),
-    //     }
-    // }
-    fn pop(&mut self) -> Option<T> {
-        /*
-            1. if head is nil, return nil
-            2. if len is 1:
-                return head
-                rest is nil
-            3. if len > 1:
-                return head
-                rest is head.next
-            2 and 3 can be combined as head.next is the variable
-        */
-        if self.head.is_none() {
-            return None;
-        }
 
+    fn pop(&mut self) -> Option<T> {
         let (v, h) = match &self.head {
             Some(head) => {
                 let hd = head.borrow();
@@ -90,50 +104,14 @@ impl<T: Clone> StackPlus<T> for LinkedList<T> {
         };
 
         self.head = h;
-        self.len -= 1;
-
         v
-        // let res_link: Option<&Link<T>>;
-        // let res_node: Option<&Node<T>>;
-        // let res_value: T;
-
-        // let x = self.head.or(None);
-
-        // self.head = Some(*target.unwrap());
-        // let target = target.unwrap();
-
-        // if let Some(link) = &self.head {
-        //     let x = link.borrow();
-        //     let y = &*x;
-        //     Some(y.val)
-        // } else {
-        //     None
-        // }
-        // None
     }
     fn pop_from_end(&mut self) -> Option<T> {
         None
     }
 
     fn len(&self) -> usize {
-        // let mut cnt = 0 as usize;
-        // let mut position: &Option<Link<T>> = &self.head;
-        // if let Some(node) = position {
-        //     cnt += 1;
-
-        //     let x = *(node.borrow());
-        //     // let reff = &*node.borrow();
-        //     // if reff.next.is_some() {
-        //     //     position = &reff.next;
-        //     // }
-
-        //     // position = &reff.next;
-        //     // &std::option::Option<&std::rc::Rc<std::cell::RefCell<ll2::Node<T>>>>
-        //     // &std::option::Option<std::rc::Rc<std::cell::RefCell<ll2::Node<T>>>>
-        // }
-
-        // loop {}
-        self.len
+        self.into_iter().count()
     }
 
     // fn last(&self) -> Option<T> {
@@ -177,4 +155,59 @@ fn linked_list() {
 }
 
 #[test]
-fn scratch() {}
+fn to_string() {
+    let mut ll = LinkedList::new();
+    ll.push(s!("one"));
+    ll.push(s!("two"));
+    ll.push(s!("three"));
+
+    // ll.replace_at(1, S!("two/mod"));
+    assert_eq!(ll.to_string(), s!("three -> two -> one"));
+}
+
+#[test]
+fn replace() {
+    let mut ll = LinkedList::new();
+    ll.push(s!("one"));
+    ll.push(s!("two"));
+    ll.push(s!("three"));
+
+    ll.replace_at(1, s!("two/mod"));
+    assert_eq!(ll.to_string(), s!("three -> /mod -> one"));
+}
+
+struct LLIter<T> {
+    curr: Option<Link<T>>,
+}
+impl<T: Clone> Iterator for LLIter<T> {
+    type Item = T;
+
+    // next() is the only required method
+    fn next(&mut self) -> Option<Self::Item> {
+        let (maybe_val, new_curr) = if let Some(curr) = &self.curr {
+            let val = curr.borrow().val.clone();
+            (Some(val), curr.borrow().next.clone())
+        } else {
+            (None, None)
+        };
+
+        self.curr = new_curr;
+        maybe_val
+    }
+}
+
+#[test]
+fn ll_iter() {
+    let mut list: LinkedList<usize> = LinkedList::new();
+    list.push(11);
+    list.push(22);
+
+    let mut iter = LLIter {
+        curr: list.head.clone(),
+    };
+
+    assert_eq!(iter.next(), Some(22));
+    assert_eq!(iter.next(), Some(11));
+    assert_eq!(iter.next(), None);
+    assert_eq!(iter.next(), None);
+}

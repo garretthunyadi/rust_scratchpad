@@ -156,8 +156,8 @@ fn main() {
     //     Err(err) => Err(err.to_string()),
     // }
     // corpus::main().or_else(|err| Err(err.to_string()))
-    // ll2::main().unwrap();
-    ascii_art::main().unwrap();
+    ll2::main().unwrap();
+    // ascii_art::main().unwrap();
 }
 
 fn specific() {
