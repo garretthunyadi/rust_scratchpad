@@ -11,6 +11,7 @@ mod macros;
 
 extern crate rand;
 
+mod ascii_art;
 mod async_await;
 mod async_await2;
 mod bayes;
@@ -43,6 +44,7 @@ mod scans3;
 mod scans4;
 mod scratch;
 mod sliding_log;
+mod state_machine;
 mod states;
 mod threads_0;
 mod threads_1;
@@ -154,7 +156,8 @@ fn main() {
     //     Err(err) => Err(err.to_string()),
     // }
     // corpus::main().or_else(|err| Err(err.to_string()))
-    ll2::main().unwrap();
+    // ll2::main().unwrap();
+    ascii_art::main().unwrap();
 }
 
 fn specific() {
