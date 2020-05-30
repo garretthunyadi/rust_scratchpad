@@ -13,7 +13,7 @@ pub fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-trait StackPlus<T> {
+trait StackPlus<T: Clone> {
     // fn first(&self) -> Option<std::cell::Ref<T>>;
     // fn last(&self) -> Option<T>;
     fn push(&mut self, v: T);
@@ -23,23 +23,23 @@ trait StackPlus<T> {
     fn len(&self) -> usize;
 }
 
+type Link<T> = Rc<RefCell<Node<T>>>;
+
 struct Node<T> {
     val: T,
-    next: Option<Rc<RefCell<Node<T>>>>,
+    next: Option<Link<T>>,
 }
 impl<T> Node<T> {
     fn new(val: T) -> Node<T> {
         Node { val, next: None }
     }
-    fn new_with_next(val: T, next: Option<Rc<RefCell<Node<T>>>>) -> Node<T> {
+    fn new_with_next(val: T, next: Option<Link<T>>) -> Node<T> {
         Node { val, next }
     }
 }
 
-type Link<T> = Rc<RefCell<Node<T>>>;
-
 struct LinkedList<T> {
-    head: Option<Rc<RefCell<Node<T>>>>,
+    head: Option<Link<T>>,
     len: usize,
 }
 
@@ -48,7 +48,7 @@ impl<T> LinkedList<T> {
         LinkedList { head: None, len: 0 }
     }
 }
-impl<T> StackPlus<T> for LinkedList<T> {
+impl<T: Clone> StackPlus<T> for LinkedList<T> {
     fn push(&mut self, v: T) {
         self.head = match &self.head {
             None => Some(Rc::new(RefCell::new(Node::new(v)))),
@@ -66,7 +66,39 @@ impl<T> StackPlus<T> for LinkedList<T> {
     //     }
     // }
     fn pop(&mut self) -> Option<T> {
-        // let target = &self.head;
+        /*
+            1. if head is nil, return nil
+            2. if len is 1:
+                return head
+                rest is nil
+            3. if len > 1:
+                return head
+                rest is head.next
+            2 and 3 can be combined as head.next is the variable
+        */
+        if self.head.is_none() {
+            return None;
+        }
+
+        let (v, h) = match &self.head {
+            Some(head) => {
+                let hd = head.borrow();
+                let val = hd.val.clone();
+                (Some(head.borrow().val.clone()), hd.next.clone())
+            }
+            None => (None, None),
+        };
+
+        self.head = h;
+        self.len -= 1;
+
+        v
+        // let res_link: Option<&Link<T>>;
+        // let res_node: Option<&Node<T>>;
+        // let res_value: T;
+
+        // let x = self.head.or(None);
+
         // self.head = Some(*target.unwrap());
         // let target = target.unwrap();
 
@@ -77,7 +109,7 @@ impl<T> StackPlus<T> for LinkedList<T> {
         // } else {
         //     None
         // }
-        None
+        // None
     }
     fn pop_from_end(&mut self) -> Option<T> {
         None
@@ -114,7 +146,7 @@ impl<T> StackPlus<T> for LinkedList<T> {
 }
 
 #[test]
-fn test_list() {
+fn linked_list() {
     let mut llist: LinkedList<usize> = LinkedList::new();
     let list: &mut dyn StackPlus<_> = &mut llist;
     assert_eq!(list.len(), 0);
@@ -137,9 +169,12 @@ fn test_list() {
     // assert_eq!(list.last(), Some(3));
 
     let t = list.pop();
-    // assert_eq!(list.len(), 2); // TODO
+    assert_eq!(list.len(), 2);
 
     let t = list.pop_from_end();
     let t = list.pop();
-    // assert_eq!(list.len(), 1); // TODO
+    assert_eq!(list.len(), 1);
 }
+
+#[test]
+fn scratch() {}
