@@ -53,12 +53,17 @@ struct LinkedList<T> {
     head: Option<Link<T>>,
 }
 
-impl<T> LinkedList<T> {
+impl<T: Clone> LinkedList<T> {
     fn new() -> LinkedList<T> {
         LinkedList { head: None }
     }
-    fn replace_at(&mut self, index: usize, v: T) {
-        unimplemented!();
+    fn replace_at(&self, index: usize, v: T) {
+        let mut link_iter = LLLinkIter::new(&self);
+        if let Some(link) = link_iter.nth(index) {
+            let mut x = link.borrow_mut();
+            x.val = v;
+            // let m = Rc::get_mut(link);
+        }
     }
 }
 impl<T: Display + Clone> Display for LinkedList<T> {
@@ -72,6 +77,16 @@ impl<T: Display + Clone> Display for LinkedList<T> {
 }
 
 impl<T: Clone> IntoIterator for &LinkedList<T> {
+    type Item = T;
+    type IntoIter = LLIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        LLIter {
+            curr: self.head.clone(),
+        }
+    }
+}
+impl<T: Clone> IntoIterator for LinkedList<T> {
     type Item = T;
     type IntoIter = LLIter<T>;
 
@@ -128,28 +143,14 @@ fn linked_list() {
     let mut llist: LinkedList<usize> = LinkedList::new();
     let list: &mut dyn StackPlus<_> = &mut llist;
     assert_eq!(list.len(), 0);
-    // assert!(list.first().is_none());
-    // assert!(list.last().is_none());
-
     list.push(1);
     assert_eq!(list.len(), 1);
-    // assert_eq!(list.first(), Some(1));
-    // assert_eq!(list.last(), Some(1));
-
     list.push(2);
     assert_eq!(list.len(), 2);
-    // assert_eq!(list.first(), Some(1));
-    // assert_eq!(list.last(), Some(2));
-
     list.push(3);
     assert_eq!(list.len(), 3);
-    // assert_eq!(list.first(), Some(1));
-    // assert_eq!(list.last(), Some(3));
-
     let t = list.pop();
     assert_eq!(list.len(), 2);
-
-    let t = list.pop_from_end();
     let t = list.pop();
     assert_eq!(list.len(), 1);
 }
@@ -160,8 +161,6 @@ fn to_string() {
     ll.push(s!("one"));
     ll.push(s!("two"));
     ll.push(s!("three"));
-
-    // ll.replace_at(1, S!("two/mod"));
     assert_eq!(ll.to_string(), s!("three -> two -> one"));
 }
 
@@ -173,7 +172,7 @@ fn replace() {
     ll.push(s!("three"));
 
     ll.replace_at(1, s!("two/mod"));
-    assert_eq!(ll.to_string(), s!("three -> /mod -> one"));
+    assert_eq!(ll.to_string(), s!("three -> two/mod -> one"));
 }
 
 struct LLIter<T> {
@@ -186,6 +185,35 @@ impl<T: Clone> Iterator for LLIter<T> {
     fn next(&mut self) -> Option<Self::Item> {
         let (maybe_val, new_curr) = if let Some(curr) = &self.curr {
             let val = curr.borrow().val.clone();
+            (Some(val), curr.borrow().next.clone())
+        } else {
+            (None, None)
+        };
+
+        self.curr = new_curr;
+        maybe_val
+    }
+}
+
+struct LLLinkIter<T> {
+    curr: Option<Link<T>>,
+    index: usize,
+}
+impl<T: Clone> LLLinkIter<T> {
+    fn new(list: &LinkedList<T>) -> LLLinkIter<T> {
+        LLLinkIter {
+            curr: list.head.clone(),
+            index: 0,
+        }
+    }
+}
+impl<T: Clone> Iterator for LLLinkIter<T> {
+    type Item = Link<T>;
+
+    // next() is the only required method
+    fn next(&mut self) -> Option<Self::Item> {
+        let (maybe_val, new_curr) = if let Some(curr) = &self.curr {
+            let val = curr.clone();
             (Some(val), curr.borrow().next.clone())
         } else {
             (None, None)
