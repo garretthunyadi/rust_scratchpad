@@ -6,7 +6,7 @@ pub fn main() -> std::io::Result<()> {
     println!("ll2");
 
     let mut llist: LinkedList<String> = LinkedList::new();
-    let list: &mut dyn StackPlus<_> = &mut llist;
+    let list: &mut dyn Stack<_> = &mut llist;
     assert_eq!(list.len(), 0);
 
     list.push(s!("first"));
@@ -28,14 +28,12 @@ pub fn main() -> std::io::Result<()> {
 
 //   ------------------------------------------------------------------
 //
-//      StackPlus
+//      Stack
 //
 //
-trait StackPlus<T: Clone> {
+trait Stack<T: Clone> {
     fn push(&mut self, v: T);
-    // fn prepend(&mut self, v: T);
     fn pop(&mut self) -> Option<T>;
-    fn pop_from_end(&mut self) -> Option<T>;
     fn len(&self) -> usize;
 }
 
@@ -61,11 +59,45 @@ impl<T> Node<T> {
 //
 struct LinkedList<T> {
     head: Option<Link<T>>,
+    tail: Option<Link<T>>,
 }
 
 impl<T: Clone> LinkedList<T> {
     fn new() -> LinkedList<T> {
-        LinkedList { head: None }
+        LinkedList {
+            head: None,
+            tail: None,
+        }
+    }
+    fn prepend(&mut self, v: T) {
+        self.head = match &self.head {
+            None => Some(Rc::new(RefCell::new(Node::new(v)))),
+            Some(rc_node) => Some(Rc::new(RefCell::new(Node::new_with_next(
+                v,
+                Some(rc_node.clone()),
+            )))),
+        };
+
+        if self.tail.is_none() {
+            self.tail = self.head.clone();
+        }
+    }
+    fn append(&mut self, v: T) {
+        self.tail = match &self.tail {
+            None => Some(Rc::new(RefCell::new(Node::new(v)))),
+            Some(rc_node) => {
+                // 1. create a new tail node
+                let new_tail = Some(Rc::new(RefCell::new(Node::new_with_next(v, None))));
+                // 2. point the current tail's next pointer to the new node
+                rc_node.borrow_mut().next = new_tail.clone();
+                // 3. return the new node, making it the new tail
+                new_tail
+            }
+        };
+
+        if self.head.is_none() {
+            self.head = self.tail.clone();
+        }
     }
     fn replace_at(&self, index: usize, v: T) {
         let mut link_iter = LLLinkIter::new(&self);
@@ -107,15 +139,9 @@ impl<T: Clone> IntoIterator for LinkedList<T> {
     }
 }
 
-impl<T: Clone> StackPlus<T> for LinkedList<T> {
+impl<T: Clone> Stack<T> for LinkedList<T> {
     fn push(&mut self, v: T) {
-        self.head = match &self.head {
-            None => Some(Rc::new(RefCell::new(Node::new(v)))),
-            Some(rc_node) => Some(Rc::new(RefCell::new(Node::new_with_next(
-                v,
-                Some(rc_node.clone()),
-            )))),
-        };
+        self.prepend(v);
     }
 
     fn pop(&mut self) -> Option<T> {
@@ -131,27 +157,15 @@ impl<T: Clone> StackPlus<T> for LinkedList<T> {
         self.head = h;
         v
     }
-    fn pop_from_end(&mut self) -> Option<T> {
-        None
-    }
-
     fn len(&self) -> usize {
         self.into_iter().count()
     }
-
-    // fn last(&self) -> Option<T> {
-    //     None
-    // }
-    // fn append(&mut self, v: T) {}
-    // fn pop_from_end(&mut self) -> Option<T> {
-    //     None
-    // }
 }
 
 #[test]
 fn linked_list() {
     let mut llist: LinkedList<usize> = LinkedList::new();
-    let list: &mut dyn StackPlus<_> = &mut llist;
+    let list: &mut dyn Stack<_> = &mut llist;
     assert_eq!(list.len(), 0);
     list.push(1);
     assert_eq!(list.len(), 1);
@@ -186,6 +200,15 @@ fn replace() {
 
     ll.replace_at(1, s!("two/mod"));
     assert_eq!(ll.to_string(), s!("three -> two/mod -> one"));
+}
+
+#[test]
+fn append() {
+    let mut ll = LinkedList::new();
+    ll.append(s!("one"));
+    ll.append(s!("two"));
+    ll.append(s!("three"));
+    assert_eq!(ll.to_string(), s!("one -> two -> three"));
 }
 
 //   ------------------------------------------------------------------
