@@ -26,6 +26,11 @@ pub fn main() -> std::io::Result<()> {
     Ok(())
 }
 
+//   ------------------------------------------------------------------
+//
+//      StackPlus
+//
+//
 trait StackPlus<T: Clone> {
     fn push(&mut self, v: T);
     // fn prepend(&mut self, v: T);
@@ -49,6 +54,11 @@ impl<T> Node<T> {
     }
 }
 
+//   ------------------------------------------------------------------
+//
+//      LinkedList
+//
+//
 struct LinkedList<T> {
     head: Option<Link<T>>,
 }
@@ -149,10 +159,13 @@ fn linked_list() {
     assert_eq!(list.len(), 2);
     list.push(3);
     assert_eq!(list.len(), 3);
-    let t = list.pop();
+    assert_eq!(list.pop(), Some(3));
     assert_eq!(list.len(), 2);
-    let t = list.pop();
+    assert_eq!(list.pop(), Some(2));
     assert_eq!(list.len(), 1);
+    assert_eq!(list.pop(), Some(1));
+    assert_eq!(list.len(), 0);
+    assert_eq!(list.pop(), None);
 }
 
 #[test]
@@ -175,6 +188,11 @@ fn replace() {
     assert_eq!(ll.to_string(), s!("three -> two/mod -> one"));
 }
 
+//   ------------------------------------------------------------------
+//
+//        LLIter
+//
+//
 struct LLIter<T> {
     curr: Option<Link<T>>,
 }
@@ -194,6 +212,27 @@ impl<T: Clone> Iterator for LLIter<T> {
         maybe_val
     }
 }
+
+#[test]
+fn ll_iter() {
+    let mut list: LinkedList<usize> = LinkedList::new();
+    list.push(11);
+    list.push(22);
+
+    let mut iter = LLIter {
+        curr: list.head.clone(),
+    };
+
+    assert_eq!(iter.next(), Some(22));
+    assert_eq!(iter.next(), Some(11));
+    assert_eq!(iter.next(), None);
+    assert_eq!(iter.next(), None);
+}
+//   ------------------------------------------------------------------
+//
+//        LLLinkIter
+//
+//
 
 struct LLLinkIter<T> {
     curr: Option<Link<T>>,
@@ -225,17 +264,14 @@ impl<T: Clone> Iterator for LLLinkIter<T> {
 }
 
 #[test]
-fn ll_iter() {
+fn ll_link_iter() {
     let mut list: LinkedList<usize> = LinkedList::new();
     list.push(11);
     list.push(22);
 
-    let mut iter = LLIter {
-        curr: list.head.clone(),
-    };
+    let mut iter = LLLinkIter::new(&list);
 
-    assert_eq!(iter.next(), Some(22));
-    assert_eq!(iter.next(), Some(11));
-    assert_eq!(iter.next(), None);
-    assert_eq!(iter.next(), None);
+    assert_eq!(iter.next().unwrap().borrow().val, 22);
+    assert_eq!(iter.next().unwrap().borrow().val, 11);
+    assert!(iter.next().is_none());
 }
