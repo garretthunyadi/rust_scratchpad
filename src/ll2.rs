@@ -30,8 +30,8 @@ trait Stack<T: Clone> {
     fn pop(&mut self) -> Option<T>;
 }
 trait Queue<T: Clone> {
-    fn into(&mut self, v: T);
-    fn out(&mut self) -> Option<T>;
+    fn enqueue(&mut self, v: T);
+    fn dequeue(&mut self) -> Option<T>;
 }
 
 type Link<T> = Rc<RefCell<Node<T>>>;
@@ -173,46 +173,15 @@ impl<T: Clone> Stack<T> for LinkedList<T> {
     }
 
     fn pop(&mut self) -> Option<T> {
-        let (v, h) = match &self.head {
-            Some(head) => {
-                let hd = head.borrow();
-                let val = hd.val.clone();
-                (Some(head.borrow().val.clone()), hd.next.clone())
-            }
-            None => (None, None),
-        };
-
-        self.head = h;
-        v
-    }
-}
-
-impl<T: Clone> Queue<T> for LinkedList<T> {
-    fn into(&mut self, v: T) {
-        self.prepend(v);
-    }
-
-    fn out(&mut self) -> Option<T> {
-        let (v, h) = match &self.head {
-            Some(head) => {
-                let hd = head.borrow();
-                let val = hd.val.clone();
-                (Some(head.borrow().val.clone()), hd.next.clone())
-            }
-            None => (None, None),
-        };
-
-        self.head = h;
-        v
+        self.remove_from_head()
     }
 }
 
 #[test]
-fn linked_list() {
+fn queue() {
     let mut list: LinkedList<usize> = LinkedList::new();
-    // let list: &mut dyn Stack<_> = &mut llist;
     assert_eq!(list.len(), 0);
-    list.push(1);
+    list.enqueue(1);
     assert_eq!(list.len(), 1);
     list.push(2);
     assert_eq!(list.len(), 2);
@@ -225,6 +194,35 @@ fn linked_list() {
     assert_eq!(list.pop(), Some(1));
     assert_eq!(list.len(), 0);
     assert_eq!(list.pop(), None);
+}
+impl<T: Clone> Queue<T> for LinkedList<T> {
+    fn enqueue(&mut self, v: T) {
+        self.prepend(v);
+    }
+
+    fn dequeue(&mut self) -> Option<T> {
+        self.remove_from_tail()
+    }
+}
+
+#[test]
+fn linked_list() {
+    let mut list: LinkedList<&str> = LinkedList::new();
+    // let list: &mut dyn Stack<_> = &mut llist;
+    assert_eq!(list.len(), 0);
+    list.enqueue("2");
+    assert_eq!(list.len(), 1);
+    list.enqueue("4");
+    assert_eq!(list.len(), 2);
+    list.enqueue("8");
+    assert_eq!(list.len(), 3);
+    assert_eq!(list.dequeue(), Some("2"));
+    assert_eq!(list.len(), 2);
+    assert_eq!(list.dequeue(), Some("4"));
+    assert_eq!(list.len(), 1);
+    assert_eq!(list.dequeue(), Some("8"));
+    assert_eq!(list.len(), 0);
+    assert_eq!(list.dequeue(), None);
 }
 
 #[test]
