@@ -4,37 +4,34 @@ use std::rc::Rc;
 
 pub fn main() -> std::io::Result<()> {
     println!("ll2");
-
-    let mut llist: LinkedList<String> = LinkedList::new();
-    let list: &mut dyn Stack<_> = &mut llist;
+    let mut list: LinkedList<String> = LinkedList::new();
+    // let list: &mut dyn Stack<_> = &mut llist;
     assert_eq!(list.len(), 0);
-
     list.push(s!("first"));
     assert_eq!(list.len(), 1);
-
     list.push(s!("second"));
     assert_eq!(list.len(), 2);
-
     list.push(s!("third"));
     assert_eq!(list.len(), 3);
-
     let val = list.pop();
     assert_eq!(list.len(), 2);
     assert_eq!(val, Some(s!("third")));
-
-    println!("{}", llist);
+    println!("{}", list);
     Ok(())
 }
 
 //   ------------------------------------------------------------------
 //
-//      Stack
+//      Stack   |   Queue   |   Link   |   Node
 //
 //
 trait Stack<T: Clone> {
     fn push(&mut self, v: T);
     fn pop(&mut self) -> Option<T>;
-    fn len(&self) -> usize;
+}
+trait Queue<T: Clone> {
+    fn into(&mut self, v: T);
+    fn out(&mut self) -> Option<T>;
 }
 
 type Link<T> = Rc<RefCell<Node<T>>>;
@@ -99,6 +96,34 @@ impl<T: Clone> LinkedList<T> {
             self.head = self.tail.clone();
         }
     }
+    fn remove_from_head(&mut self) -> Option<T> {
+        let (v, h) = match &self.head {
+            Some(head) => {
+                let hd = head.borrow();
+                let val = hd.val.clone();
+                (Some(head.borrow().val.clone()), hd.next.clone())
+            }
+            None => (None, None),
+        };
+
+        self.head = h;
+        v
+    }
+    fn remove_from_tail(&mut self) -> Option<T> {
+        unimplemented!();
+        // let (v, h) = match &self.head {
+        //     Some(head) => {
+        //         let hd = head.borrow();
+        //         let val = hd.val.clone();
+        //         (Some(head.borrow().val.clone()), hd.next.clone())
+        //     }
+        //     None => (None, None),
+        // };
+
+        // self.head = h;
+        // v
+    }
+
     fn replace_at(&self, index: usize, v: T) {
         let mut link_iter = LLLinkIter::new(&self);
         if let Some(link) = link_iter.nth(index) {
@@ -106,6 +131,9 @@ impl<T: Clone> LinkedList<T> {
             x.val = v;
             // let m = Rc::get_mut(link);
         }
+    }
+    fn len(&self) -> usize {
+        self.into_iter().count()
     }
 }
 impl<T: Display + Clone> Display for LinkedList<T> {
@@ -157,15 +185,32 @@ impl<T: Clone> Stack<T> for LinkedList<T> {
         self.head = h;
         v
     }
-    fn len(&self) -> usize {
-        self.into_iter().count()
+}
+
+impl<T: Clone> Queue<T> for LinkedList<T> {
+    fn into(&mut self, v: T) {
+        self.prepend(v);
+    }
+
+    fn out(&mut self) -> Option<T> {
+        let (v, h) = match &self.head {
+            Some(head) => {
+                let hd = head.borrow();
+                let val = hd.val.clone();
+                (Some(head.borrow().val.clone()), hd.next.clone())
+            }
+            None => (None, None),
+        };
+
+        self.head = h;
+        v
     }
 }
 
 #[test]
 fn linked_list() {
-    let mut llist: LinkedList<usize> = LinkedList::new();
-    let list: &mut dyn Stack<_> = &mut llist;
+    let mut list: LinkedList<usize> = LinkedList::new();
+    // let list: &mut dyn Stack<_> = &mut llist;
     assert_eq!(list.len(), 0);
     list.push(1);
     assert_eq!(list.len(), 1);
