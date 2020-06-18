@@ -8,6 +8,7 @@ mod proxy;
 mod satellite;
 mod satsim;
 mod sm2;
+mod sm3;
 mod state_machine;
 
 fn main() -> Result<(), Error> {
@@ -17,21 +18,21 @@ fn main() -> Result<(), Error> {
 
   // construct satsim
   // comm_tx: std::sync::mpsc::Sender<SatEvent>
-  let (tx, _rx) = mpsc::channel();
+  let (tx, rx) = mpsc::channel();
 
   let satsim = satsim::SatSim::new(tx);
   // construct sat, inject satellite trait
 
   let _sat = satellite::Satellite::new(&satsim);
-  // for event in rx.recv() {
-  //   match event {
-  //     satsim::SatEvent::BatteryStateChange(partId, percent) => {
-  //       // let state = sat.handle_event(satellite::Event::Instruction::)?;
-  //     }
-  //     satsim::SatEvent::Anomaly(partId, errorString) => {}
-  //   }
-  //   // let state = sat.handle_event(event)?;
-  // }
+  for event in rx.recv() {
+    match event {
+      satsim::SatEvent::BatteryStateChange(_part_id, _percent) => {
+        // let state = sat.handle_event(satellite::Event::Instruction::)?;
+      }
+      satsim::SatEvent::Anomaly(_part_id, _error_string) => {}
+    }
+    // let state = sat.handle_event(event)?;
+  }
   Ok(())
 }
 

@@ -40,6 +40,7 @@ mod random;
 mod rc2;
 mod rc_arc;
 mod rust_book;
+mod satellite;
 mod scans3;
 mod scans4;
 mod scratch;
@@ -114,8 +115,8 @@ macro_rules! s {
 // #[tokio::main]
 // async fn main() {
 //     // async_stream::main();
-//     wappalyzer_crate::main().await;
-//     // domain_info_crate::main();
+//     // wappalyzer_crate::main().await;
+//     domain_info_crate::main();
 // }
 
 fn main() {
@@ -156,8 +157,8 @@ fn main() {
     //     Err(err) => Err(err.to_string()),
     // }
     // corpus::main().or_else(|err| Err(err.to_string()))
-    ll2::main().unwrap();
-    // ascii_art::main().unwrap();
+    // ll2::main().unwrap();
+    ascii_art::main().unwrap();
 }
 
 fn specific() {

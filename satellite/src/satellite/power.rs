@@ -18,7 +18,7 @@ pub enum State {
 
 pub type Level = u32; // 0..100
 
-struct Power(Level, Level); // two unite
+struct Power(Level, Level); // two units
 
 pub struct ControlUnit {
     _private: (), // prevent construction

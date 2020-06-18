@@ -1,3 +1,6 @@
+/*
+    NOTHING HERE YET
+*/
 use specs::{Component, VecStorage};
 
 #[derive(Component, Debug)]

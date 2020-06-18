@@ -17,7 +17,7 @@ use std::io::Error;
     - Should the sim know about the Sat? Seems reasonable, but the reason for the sim is to
     simulate the random events (simulating only this aspect of the actial satellite, like failure rates
     not a model of the satellite), not the behavior of the sat.
-  The controller creates the environmen
+  The controller creates the environment
      - Creates the channels, satellite and sim (giving channels), launches threads
 
      sat = Sat
