@@ -23,10 +23,23 @@ struct Recipe {
     steps: Vec<Command>,
 }
 
+#[derive(PartialEq, Debug, Clone)]
 enum Command {
+    // Baking Commands
+    Grab(Ingredient),
+    Squeeze,
+    Release,
+    Scoop(Ingredient),
+    AddToBowl,
     Mix,
+    PourIntoPan,
     Bake(Quantity),
-    Cool,
+    CoolPan,
+
+    // Fetching Commands
+    Goto(Location),
+    LoadUp(Ingredient),
+    Unload(Ingredient),
 }
 
 fn recipe_for(good: BakedGood) -> Recipe {
@@ -36,11 +49,11 @@ fn recipe_for(good: BakedGood) -> Recipe {
     match good {
         Cake => Recipe {
             ingredients: vec![(Flour, 2), (Eggs, 2), (Milk, 1), (Sugar, 1)],
-            steps: vec![Mix, Bake(25), Cool],
+            steps: vec![Mix, Bake(25), CoolPan],
         },
         Cookies => Recipe {
             ingredients: vec![(Eggs, 1), (Flour, 1), (Sugar, 1), (Butter, 1)],
-            steps: vec![Mix, Bake(30), Cool],
+            steps: vec![Mix, Bake(30), CoolPan],
         },
         Brownies => Recipe {
             ingredients: vec![
@@ -51,7 +64,7 @@ fn recipe_for(good: BakedGood) -> Recipe {
                 (Milk, 1),
                 (Butter, 2),
             ],
-            steps: vec![Mix, Bake(35), Cool],
+            steps: vec![Mix, Bake(35), CoolPan],
         },
     }
 }
@@ -112,6 +125,14 @@ pub enum Ingredient {
 type InventoryItem = (Ingredient, u16);
 type Inventory = HashMap<Ingredient, u16>;
 
+fn location_for(ingr: &Ingredient) -> Location {
+    use Ingredient::*;
+    match ingr {
+        Flour | Cocoa | Sugar => Location::Pantry,
+        Eggs | Milk | Butter => Location::Fridge,
+    }
+}
+
 //
 // Filling Orders
 //
@@ -134,6 +155,7 @@ struct Robot {
     location: Location,
     holding: Option<Ingredient>,
     inventory: Inventory,
+    log: Vec<Command>,
 }
 impl Robot {
     pub fn new() -> Robot {
@@ -141,6 +163,7 @@ impl Robot {
             location: Location::PrepArea,
             holding: None,
             inventory: Inventory::new(),
+            log: vec![],
         }
     }
 
@@ -157,9 +180,12 @@ impl Robot {
     }
 
     fn prepare_order(&mut self, order: Order) -> Result<Receipt, Error> {
-        let rack_ids = HashSet::new();
+        let mut rack_ids = HashSet::new();
         for (item, quantity) in order.clone().items {
-            let racks = self.prepare_baked_good(item, quantity).unwrap();
+            let ids = self.prepare_baked_good(item, quantity).unwrap();
+            for id in ids {
+                rack_ids.insert(id);
+            }
         }
         Ok(Receipt::from(order, rack_ids.into_iter().collect()))
     }
@@ -191,7 +217,8 @@ impl Robot {
         println!("{:?}", tabletop);
         // make the thing
         for cmd in recipe.steps {
-            self.perform(cmd);
+            let cmd = self.perform(cmd)?;
+            self.log.push(cmd);
         }
 
         // put it on a cooling rack
@@ -199,121 +226,153 @@ impl Robot {
     }
 
     fn fetch_ingredient(
-        &self,
+        &mut self,
         ingr: Ingredient,
         quantity: Quantity,
     ) -> Result<Vec<Ingredient>, Error> {
+        // move to location for ingredient
+        let loc = location_for(&ingr);
+
+        let cmd = self.go_to(loc)?;
+        self.log.push(cmd);
         let mut bag = vec![];
+
         for _ in 0..quantity {
-            // todo: go fetch the ingredent
+            let cmd = self.load_up(&ingr)?;
+            self.log.push(cmd);
             bag.push(ingr.clone());
         }
-        Ok(bag)
+
+        let cmd = self.go_to(Location::PrepArea)?;
+        self.log.push(cmd);
+
+        for ingr in bag.clone() {
+            // todo: go fetch the ingredent
+            let cmd = self.unload(ingr)?;
+            self.log.push(cmd);
+        }
+        Ok(bag) // TODO: the contents are unloaded, so I'm not sure it makes sense to return the collection.
     }
 
-    fn perform(&mut self, cmd: Command) {
+    fn perform(&mut self, cmd: Command) -> Result<Command, Error> {
         use Command::*;
-        match cmd {
-            Mix => self.mix().unwrap(),
-            Bake(mins) => self.bake_pan(mins).unwrap(),
-            Cool => self.cool_pan().unwrap(),
-        }
+        Ok(match cmd {
+            Grab(ingr) => self.grab(ingr),
+            Squeeze => self.squeeze(),
+            Release => self.release(),
+            Scoop(ingr) => self.scoop(&ingr),
+            AddToBowl => self.add_to_bowl(),
+            Mix => self.mix(),
+            PourIntoPan => self.pour_into_pan(),
+            Bake(mins) => self.bake_pan(mins),
+            CoolPan => self.cool_pan(),
+            Goto(loc) => self.go_to(loc),
+            LoadUp(ingr) => self.load_up(&ingr),
+            Unload(ingr) => self.unload(ingr),
+        }?)
     }
 
     //
     // Fetching commands
     //
 
-    pub fn go_to(&mut self, loc: Location) -> Result<Location, Error> {
+    pub fn go_to(&mut self, loc: Location) -> Result<Command, Error> {
         self.location = loc.clone();
-        Ok(loc)
+        Ok(Command::Goto(loc))
     }
-    pub fn load(&mut self, ing: Ingredient) -> Result<Ingredient, Error> {
+    pub fn load_up(&mut self, ingr: &Ingredient) -> Result<Command, Error> {
         use Ingredient::*;
         use Location::*;
-        match (&self.location, ing.clone()) {
-            (Fridge, Eggs) => Ok(ing),
-            (Fridge, Milk) => Ok(ing),
-            (Fridge, Butter) => Ok(ing),
-            (Pantry, Flour) => Ok(ing),
-            (Pantry, Cocoa) => Ok(ing),
-            (Pantry, Sugar) => Ok(ing),
+        match (&self.location, ingr.clone()) {
+            (Fridge, Eggs)
+            | (Fridge, Milk)
+            | (Fridge, Butter)
+            | (Pantry, Flour)
+            | (Pantry, Cocoa)
+            | (Pantry, Sugar) => Ok(Command::LoadUp(ingr.clone())),
             (_, _) => Err(Error::new(
                 ErrorKind::Other,
-                format!("Invalid location/item combo: {:?}/{:?}", self.location, ing),
+                format!(
+                    "Invalid location/item combo: {:?}/{:?}",
+                    self.location, ingr
+                ),
             )),
         }
     }
 
-    pub fn unload(&mut self, ing: Ingredient) -> Result<Ingredient, Error> {
-        // not sure if this needs more validation.
-        Ok(ing)
+    pub fn unload(&mut self, ingr: Ingredient) -> Result<Command, Error> {
+        if self.location == Location::PrepArea {
+            Ok(Command::Unload(ingr))
+        } else {
+            Err(Error::new(
+                ErrorKind::Other,
+                format!("Cannot unload away from : {:?}/{:?}", self.location, ingr),
+            ))
+        }
     }
 
     //
     // Baking commands
     //
 
-    pub fn grab(&mut self, ing: Ingredient) -> Result<Ingredient, Error> {
-        match ing.clone() {
-            Ingredient::Eggs => Ok(ing),
-            Ingredient::Butter => Ok(ing),
+    pub fn grab(&mut self, ingr: Ingredient) -> Result<Command, Error> {
+        match ingr.clone() {
+            Ingredient::Eggs => Ok(Command::Grab(ingr)),
+            Ingredient::Butter => Ok(Command::Grab(ingr)),
             _ => Err(Error::new(
                 ErrorKind::Other,
-                format!("Can't grab {:?}", ing),
+                format!("Can't grab {:?}", ingr),
             )),
         }
     }
-    pub fn squeeze(&mut self) -> Result<(), Error> {
+    pub fn squeeze(&mut self) -> Result<Command, Error> {
         // not sure if this needs more validation.
-        Ok(())
+        Ok(Command::Squeeze)
     }
 
-    pub fn release(&mut self) -> Result<(), Error> {
+    pub fn release(&mut self) -> Result<Command, Error> {
         // not sure if this needs more validation.
-        Ok(())
+        Ok(Command::Release)
     }
-    pub fn scoop(&mut self, ing: Ingredient) -> Result<Ingredient, Error> {
-        match ing.clone() {
-            Ingredient::Milk => Ok(ing),
-            Ingredient::Flour => Ok(ing),
-            Ingredient::Cocoa => Ok(ing),
-            Ingredient::Sugar => Ok(ing),
+    pub fn scoop(&mut self, ingr: &Ingredient) -> Result<Command, Error> {
+        use Ingredient::*;
+        match ingr {
+            Milk | Flour | Cocoa | Sugar => Ok(Command::Scoop(ingr.clone())),
             _ => Err(Error::new(
                 ErrorKind::Other,
-                format!("Can't scoop {:?}", ing),
+                format!("Can't scoop {:?}", ingr),
             )),
         }
     }
-    pub fn add_to_bowl(&mut self) -> Result<(), Error> {
+    pub fn add_to_bowl(&mut self) -> Result<Command, Error> {
         // not sure if this needs more validation.
-        Ok(())
+        Ok(Command::AddToBowl)
     }
-    pub fn mix(&mut self) -> Result<(), Error> {
+    pub fn mix(&mut self) -> Result<Command, Error> {
         // not sure if this needs more validation.
-        Ok(())
+        Ok(Command::Mix)
     }
-    pub fn pour_in_pan(&mut self) -> Result<(), Error> {
+    pub fn pour_into_pan(&mut self) -> Result<Command, Error> {
         // not sure if this needs more validation.
-        Ok(())
+        Ok(Command::PourIntoPan)
     }
-    pub fn bake_pan(&mut self, minutes: u16) -> Result<(), Error> {
+    pub fn bake_pan(&mut self, minutes: u16) -> Result<Command, Error> {
         // not sure if this needs more validation.
-        Ok(())
+        Ok(Command::Bake(minutes))
     }
-    pub fn cool_pan(&mut self) -> Result<(), Error> {
+    pub fn cool_pan(&mut self) -> Result<Command, Error> {
         // not sure if this needs more validation.
-        Ok(())
+        Ok(Command::CoolPan)
     }
 
     // private
-    fn add_to_inventory(&mut self, ing: Ingredient) -> Result<(), Error> {
-        let count = self.inventory.entry(ing).or_insert(0);
+    fn add_to_inventory(&mut self, ingr: Ingredient) -> Result<(), Error> {
+        let count = self.inventory.entry(ingr).or_insert(0);
         *count += 1;
         Ok(())
     }
-    fn inventory_count(&self, ing: Ingredient) -> u16 {
-        *self.inventory.get(&ing).or(Some(&0)).unwrap()
+    fn inventory_count(&self, ingr: Ingredient) -> u16 {
+        *self.inventory.get(&ingr).or(Some(&0)).unwrap()
     }
 }
 
@@ -332,4 +391,6 @@ fn test_orders() {
     let mut robot = Robot::new();
     let orders = get_morning_orders().unwrap();
     let receipts = robot.prepare_orders(orders).unwrap();
+    println!("\nRECEIPTS: {:?}", receipts);
+    println!("\nLOG: {:?}", robot.log);
 }
