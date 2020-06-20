@@ -39,6 +39,9 @@ mod mutex;
 mod random;
 mod rc2;
 mod rc_arc;
+mod robot;
+mod robot_and_loc;
+mod robot_at;
 mod rust_book;
 mod satellite;
 mod scans3;
@@ -77,14 +80,18 @@ macro_rules! s {
 // futures::join!(f1, f2, f3, f4);
 // }
 
-// fn main() -> Result<(), std::io::Error> {
-// async_await2::main();
-// block_on(async_main());
-// block_on(async_mains());
-// cyoa::main();
-// random::main();
-// grep::main();
-// mutex::main();
+fn main() -> Result<(), std::io::Error> {
+    // async_await2::main();
+    // block_on(async_main());
+    // block_on(async_mains());
+    // cyoa::main();
+    // random::main();
+    // grep::main();
+    // mutex::main();
+    robot::main()
+    // robot_at::main()
+    // robot_and_loc::main()
+}
 // states::main()?;
 // channels::main()?;
 // markov_chain4::main()?;
@@ -119,47 +126,46 @@ macro_rules! s {
 //     domain_info_crate::main();
 // }
 
-fn main() {
-    // json_macro::main(); // not done
-    // macros::main();
-    // let _ = bayes::main();
-    // scratch::main();
-    // headless_screenshot::main();
-    // ecs::main();
-    // }
-    // scratch::main();
-    // main1();
-    // traits1();
-    // scans1();
-    // locks1();
-    // threads1();
-    // channels1();
-    // mutex1();
-    // docs_main();
-    // iter();
-    // specific();
-    // state_machine();
-    // run_story();
-    // generics();
-    // polymorphism();
-    // monomorphism();
-    // scans2::scan_states();
-    // scans3::main();
-    // maybies();
-    // default::main();
-    // getters::main()?;
-    // linked_list::main();
-    // ll_tx_log::main();
-    // sliding_log::main();
-    // iterator::main();
-    // match corpus::main() {
-    //     Ok(()) => Ok(()),
-    //     Err(err) => Err(err.to_string()),
-    // }
-    // corpus::main().or_else(|err| Err(err.to_string()))
-    // ll2::main().unwrap();
-    ascii_art::main().unwrap();
-}
+// fn main() {
+// json_macro::main(); // not done
+// macros::main();
+// let _ = bayes::main();
+// scratch::main();
+// headless_screenshot::main();
+// ecs::main();
+// }
+// main1();
+// traits1();
+// scans1();
+// locks1();
+// threads1();
+// channels1();
+// mutex1();
+// docs_main();
+// iter();
+// specific();
+// state_machine();
+// run_story();
+// generics();
+// polymorphism();
+// monomorphism();
+// scans2::scan_states();
+// scans3::main();
+// maybies();
+// default::main();
+// getters::main()?;
+// linked_list::main();
+// ll_tx_log::main();
+// sliding_log::main();
+// iterator::main();
+// match corpus::main() {
+//     Ok(()) => Ok(()),
+//     Err(err) => Err(err.to_string()),
+// }
+// corpus::main().or_else(|err| Err(err.to_string()))
+// ll2::main().unwrap();
+// ascii_art::main().unwrap();
+// }
 
 fn specific() {
     let mut state = ASpecificStateMachine::start();
