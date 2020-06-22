@@ -1,6 +1,7 @@
 /*
     Robot Chef, based on Eric Normand's Clojure exercise.
 
+    [] Add scoop state
     [] Add in the tabletop as a storage location that sources the ingrediants while preping
     [x] Grab :scoop
     [/] Turn procedural loops into functional expressions
@@ -180,9 +181,15 @@ pub fn delivery_receipt(order: Order, rack_ids: Vec<RackId>) -> Result<Receipt, 
 }
 
 #[derive(PartialEq, Debug)]
+enum Holdable {
+    Scoop(Option<Ingredient>),
+    Ingredient(Ingredient),
+}
+
+#[derive(PartialEq, Debug)]
 struct Robot {
     location: Location,
-    holding: Option<Ingredient>,
+    holding: Option<Holdable>,
     inventory: Inventory,
     log: Vec<Command>,
 }
@@ -263,7 +270,7 @@ impl Robot {
         //     tabletop.append(&mut items);
         // }
 
-        let tabletop = recipe
+        let mut tabletop = recipe
             .ingredients
             .iter()
             .flat_map(|(ingr, quantity)| self.fetch_ingredient(ingr, quantity)) // flatmap removes the errors
@@ -279,7 +286,7 @@ impl Robot {
         let mut cmds = recipe
             .steps
             .into_iter()
-            .flat_map(|cmd| self.perform(cmd))
+            .flat_map(|cmd| self.perform(cmd, &mut tabletop))
             .flatten()
             .collect();
         self.log.append(&mut cmds);
@@ -329,13 +336,17 @@ impl Robot {
         Ok(bag) // TODO: the contents are unloaded (and not in the robot's inventory), so I'm not sure it makes sense to return the collection.
     }
 
-    fn perform(&mut self, cmd: Command) -> Result<Vec<Command>, Error> {
+    fn perform(
+        &mut self,
+        cmd: Command,
+        source: &mut Vec<Ingredient>,
+    ) -> Result<Vec<Command>, Error> {
         fn cmd_as_vec(cmd: Command) -> Result<Vec<Command>, Error> {
             Ok(vec![cmd])
         }
         use Command::*;
         Ok(match cmd {
-            Grab(ingr) => cmd_as_vec(self.grab(&ingr)?),
+            Grab(ingr) => cmd_as_vec(self.grab(&ingr, source)?),
             Squeeze => cmd_as_vec(self.squeeze()?),
             Release => cmd_as_vec(self.release()?),
             Scoop(ingr) => cmd_as_vec(self.scoop(&ingr)?),
@@ -436,10 +447,24 @@ impl Robot {
     // Baking commands
     //
 
-    pub fn grab(&mut self, ingr: &Ingredient) -> Result<Command, Error> {
+    pub fn grab(
+        &mut self,
+        ingr: &Ingredient,
+        source: &mut Vec<Ingredient>,
+    ) -> Result<Command, Error> {
+        use Ingredient::*;
         match ingr.clone() {
-            Ingredient::Eggs => Ok(Command::Grab(ingr.clone())),
-            Ingredient::Butter => Ok(Command::Grab(ingr.clone())),
+            Eggs | Butter => {
+                if let Some(ingr) = remove_item(source, ingr) {
+                    self.holding = Some(Holdable::Ingredient(ingr.clone()));
+                    Ok(Command::Grab(ingr.clone()))
+                } else {
+                    Err(Error::new(
+                        ErrorKind::Other,
+                        format!("Can't grab {:?} because there is none nearby", ingr),
+                    ))
+                }
+            }
             _ => Err(Error::new(
                 ErrorKind::Other,
                 format!("Can't grab {:?}", ingr),
@@ -512,6 +537,61 @@ fn test_robot() {
     assert_eq!(2, robot.inventory_count(Ingredient::Butter));
 }
 
+pub fn remove_item<V, T>(vec: &mut Vec<T>, item: &V) -> Option<T>
+where
+    T: PartialEq<V>,
+{
+    vec.iter().position(|n| n == item).map(|i| vec.remove(i))
+}
+
+#[test]
+fn test_grab() {
+    use Ingredient::*;
+    // pub fn grab(
+    //     &mut self,
+    //     ingr: &Ingredient,
+    //     source: &mut Vec<Ingredient>,
+    // ) -> Result<Command, Error> {
+
+    let mut tabletop = vec![Butter, Eggs, Eggs];
+    let mut robot = Robot::new();
+    assert!(robot.holding.is_none());
+    assert!(robot.grab(&Butter, &mut tabletop).is_ok());
+    assert_eq!(vec![Eggs, Eggs], tabletop);
+    assert_eq!(robot.holding, Some(Holdable::Ingredient(Butter)));
+}
+
+#[test]
+fn test_remove_item() {
+    use Ingredient::*;
+
+    let mut v = vec![Butter, Butter, Eggs];
+    let res = remove_item(&mut v, &Eggs);
+    assert_eq!(Some(Eggs), res);
+    assert_eq!(vec![Butter, Butter], v);
+
+    let res = remove_item(&mut v, &Milk);
+    assert_eq!(None, res);
+    assert_eq!(vec![Butter, Butter], v);
+
+    let res = remove_item(&mut v, &Butter);
+    assert_eq!(Some(Butter), res);
+    assert_eq!(vec![Butter], v);
+
+    let res = remove_item(&mut v, &Butter);
+    assert_eq!(Some(Butter), res);
+    assert!(v.is_empty());
+
+    let res = remove_item(&mut v, &Butter);
+    assert_eq!(None, res);
+    assert!(v.is_empty());
+
+    let mut v = vec![Butter, Butter, Eggs];
+    let res = remove_item(&mut v, &Butter);
+    assert_eq!(Some(Butter), res);
+    assert_eq!(vec![Butter, Eggs], v);
+}
+
 // #[test]
 fn test_orders() {
     let mut robot = Robot::new();
@@ -520,3 +600,10 @@ fn test_orders() {
     println!("\nRECEIPTS: {:?}", receipts);
     println!("\nLOG: {:?}", robot.log);
 }
+
+// This didn't work immediately, but I should come back to it
+// impl From<Command> for Vec<Command> {
+//     fn from(cmd: Command) -> Self {
+//         vec![cmd]
+//     }
+// }
