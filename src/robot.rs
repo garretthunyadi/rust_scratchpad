@@ -180,7 +180,7 @@ pub fn delivery_receipt(order: Order, rack_ids: Vec<RackId>) -> Result<Receipt, 
     Ok(Receipt::from(order, rack_ids))
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 enum Holdable {
     Scoop(Option<Ingredient>),
     Ingredient(Ingredient),
@@ -349,7 +349,7 @@ impl Robot {
             Grab(ingr) => cmd_as_vec(self.grab(&ingr, source)?),
             Squeeze => cmd_as_vec(self.squeeze()?),
             Release => cmd_as_vec(self.release()?),
-            Scoop(ingr) => cmd_as_vec(self.scoop(&ingr)?),
+            Scoop(ingr) => cmd_as_vec(self.scoop(&ingr, source)?),
             AddToBowl => cmd_as_vec(self.add_to_bowl()?),
             Mix => cmd_as_vec(self.mix()?),
             PourIntoPan => cmd_as_vec(self.pour_into_pan()?),
@@ -480,14 +480,52 @@ impl Robot {
         // not sure if this needs more validation.
         Ok(Command::Release)
     }
-    pub fn scoop(&mut self, ingr: &Ingredient) -> Result<Command, Error> {
+    pub fn scoop(
+        &mut self,
+        ingr: &Ingredient,
+        source: &mut Vec<Ingredient>,
+    ) -> Result<Command, Error> {
         use Ingredient::*;
-        match ingr {
-            Milk | Flour | Cocoa | Sugar => Ok(Command::Scoop(ingr.clone())),
-            _ => Err(Error::new(
-                ErrorKind::Other,
-                format!("Can't scoop {:?}", ingr),
-            )),
+
+        match self.holding.clone() {
+            Some(Holdable::Scoop(None)) => match ingr {
+                Milk | Flour | Cocoa | Sugar => {
+                    if let Some(ingr) = remove_item(source, ingr) {
+                        self.holding = Some(Holdable::Scoop(Some(ingr.clone())));
+                        Ok(Command::Scoop(ingr.clone()))
+                    } else {
+                        Err(Error::new(
+                            ErrorKind::Other,
+                            format!("Can't scoop {:?} because there is none nearby", ingr),
+                        ))
+                    }
+                }
+                _ => Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Can't scoop {:?}", ingr),
+                )),
+            },
+            None => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Can't scoop {:?} because I'm not holding my scoop", ingr),
+                ));
+            }
+            Some(Holdable::Ingredient(held_ingr)) => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Can't scoop {:?} because I'm holding {:?}", ingr, held_ingr),
+                ));
+            }
+            Some(Holdable::Scoop(Some(ingr_in_scoop))) => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!(
+                        "Can't scoop {:?} because my scoop has some {:?}",
+                        ingr, ingr_in_scoop
+                    ),
+                ));
+            }
         }
     }
     pub fn add_to_bowl(&mut self) -> Result<Command, Error> {
@@ -512,7 +550,15 @@ impl Robot {
     }
 
     pub fn grab_scoop(&mut self) -> Result<Command, Error> {
-        // not sure if this needs more validation.
+        match self.holding.clone() {
+            None => self.holding = Some(Holdable::Scoop(None)),
+            Some(x) => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Can't grab scoop because I'm holding {:?}", x),
+                ))
+            }
+        }
         Ok(Command::GrabScoop)
     }
 
@@ -553,12 +599,35 @@ fn test_grab() {
     //     source: &mut Vec<Ingredient>,
     // ) -> Result<Command, Error> {
 
-    let mut tabletop = vec![Butter, Eggs, Eggs];
+    let mut tabletop = vec![Butter, Eggs, Eggs, Sugar];
     let mut robot = Robot::new();
     assert!(robot.holding.is_none());
     assert!(robot.grab(&Butter, &mut tabletop).is_ok());
-    assert_eq!(vec![Eggs, Eggs], tabletop);
+    assert_eq!(vec![Eggs, Eggs, Sugar], tabletop);
     assert_eq!(robot.holding, Some(Holdable::Ingredient(Butter)));
+
+    // can't grab sugar
+    assert!(robot.grab(&Sugar, &mut tabletop).is_err());
+
+    // can't grab what's not there.
+    let mut tabletop = vec![];
+    assert!(robot.grab(&Butter, &mut tabletop).is_err());
+}
+
+#[test]
+fn test_scoop() {
+    use Ingredient::*;
+    let mut tabletop = vec![Eggs, Milk, Milk];
+    let mut robot = Robot::new();
+    assert!(robot.holding.is_none());
+    assert!(robot.scoop(&Milk, &mut tabletop).is_err()); // not holding a scoop
+    robot.grab_scoop().unwrap();
+    assert!(robot.scoop(&Milk, &mut tabletop).is_ok());
+    assert_eq!(vec![Eggs, Milk], tabletop);
+    assert_eq!(robot.holding, Some(Holdable::Scoop(Some(Milk))));
+
+    // can't scoop eggs
+    assert!(robot.scoop(&Eggs, &mut tabletop).is_err());
 }
 
 #[test]
