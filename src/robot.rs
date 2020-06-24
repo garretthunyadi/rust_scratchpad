@@ -1,6 +1,8 @@
 /*
     Robot Chef, based on Eric Normand's Clojure exercise.
 
+    [] How can I remodel the robot's location and the scoop state model to make error states unrepresentatable?
+
     [] Add scoop state
     [] Add in the tabletop as a storage location that sources the ingrediants while preping
     [x] Grab :scoop
@@ -277,6 +279,12 @@ impl Robot {
             .flatten() // [[Ingr1,Ingr2],[Ingr1]] -> [Ingr1,Ingr2,Ingr1]
             .collect::<Vec<Ingredient>>();
 
+        assert_eq!(
+            self.location,
+            Location::PrepArea,
+            "Dev error: Robot is not at the prep area when starting to prepare"
+        );
+
         println!(" /--\\ {:?}", tabletop);
         // make the thing
         // for cmd in recipe.steps {
@@ -294,7 +302,7 @@ impl Robot {
         // put it on a cooling rack
         Ok(format!(
             "rack{}",
-            [123, 34, 377, 5453, 233, 555, 112, 000, 001, 002, 003, 004,]
+            [123, 34, 377, 5453, 233, 555, 112, 000, 001, 002, 003, 004] // TODO: impl "real" cooling racks
                 .choose(&mut rand::thread_rng())
                 .unwrap()
         ))
@@ -310,12 +318,12 @@ impl Robot {
 
         let cmd = self.go_to(loc)?;
         self.log.push(cmd);
-        let mut bag = vec![];
+        let mut tray = vec![];
 
         for _ in 0..*quantity {
             let cmd = self.load_up(&ingr)?;
             self.log.push(cmd);
-            bag.push(ingr.clone());
+            tray.push(ingr.clone());
         }
 
         let cmd = self.go_to(Location::PrepArea)?;
@@ -326,14 +334,14 @@ impl Robot {
         //     let cmd = self.unload(ingr)?;
         //     self.log.push(cmd);
         // }
-        let mut cmds = bag
+        let mut cmds = tray
             .clone()
             .into_iter()
             .flat_map(|ingr| self.unload(ingr))
             .collect::<Vec<_>>();
         self.log.append(&mut cmds);
 
-        Ok(bag) // TODO: the contents are unloaded (and not in the robot's inventory), so I'm not sure it makes sense to return the collection.
+        Ok(tray) // TODO: the contents are unloaded (and not in the robot's inventory), so I'm not sure it makes sense to return the collection.
     }
 
     fn perform(
@@ -529,23 +537,30 @@ impl Robot {
         }
     }
     pub fn add_to_bowl(&mut self) -> Result<Command, Error> {
-        // not sure if this needs more validation.
-        Ok(Command::AddToBowl)
+        match self.holding {
+            None => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Can't add to bowl because I'm not holding anything"),
+                ));
+            }
+            Some(_) => Ok(Command::AddToBowl),
+        }
     }
     pub fn mix(&mut self) -> Result<Command, Error> {
-        // not sure if this needs more validation.
+        // TODO: check that there is something in the bowl.
         Ok(Command::Mix)
     }
     pub fn pour_into_pan(&mut self) -> Result<Command, Error> {
-        // not sure if this needs more validation.
+        // TODO: check that there is something in the bowl.
         Ok(Command::PourIntoPan)
     }
     pub fn bake_pan(&mut self, minutes: u16) -> Result<Command, Error> {
-        // not sure if this needs more validation.
+        // TODO: check that there is something in the pan.
         Ok(Command::Bake(minutes))
     }
     pub fn cool_pan(&mut self) -> Result<Command, Error> {
-        // not sure if this needs more validation.
+        // TODO: must have a pan (newly baked item).
         Ok(Command::CoolPan)
     }
 
