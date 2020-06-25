@@ -89,7 +89,7 @@ struct Robot {
 // }
 
 #[derive(PartialEq, Debug)]
-struct RobotAt<L: Sized> {
+struct RobotAt<L> {
     inventory: Inventory,
     phantom: PhantomData<L>,
 }
@@ -132,17 +132,18 @@ impl RobotAt<PrepArea> {
             phantom: PhantomData,
         }
     }
-    pub fn move_to_fridge(self) -> Result<RobotAt<Fridge>, Error> {
+    pub fn to_fridge(self) -> Result<RobotAt<Fridge>, Error> {
         Ok(self.into())
     }
-    pub fn move_to_pantry(self) -> Result<RobotAt<Pantry>, Error> {
+    pub fn to_pantry(self) -> Result<RobotAt<Pantry>, Error> {
         Ok(self.into())
     }
-    pub fn unload(&mut self, ing: Ingredient) -> Result<Command, Error> {
-        self.remove_from_inventory(ing)
+    pub fn unload(mut self, ing: Ingredient) -> Result<RobotAt<PrepArea>, Error> {
+        let _ = self.remove_from_inventory(ing); // TODO: unload to something
+        Ok(self)
     }
-    pub fn stir(&mut self) -> Result<Command, Error> {
-        Ok(Command::Stir)
+    pub fn stir(self) -> Result<RobotAt<PrepArea>, Error> {
+        Ok(self)
     }
     pub fn grab(&mut self, ing: Ingredient) -> Result<Command, Error> {
         match ing.clone() {
@@ -154,17 +155,20 @@ impl RobotAt<PrepArea> {
             )),
         }
     }
-    pub fn scoop(&mut self, ing: Ingredient) -> Result<Command, Error> {
-        match ing.clone() {
-            Ingredient::Milk => Ok(Command::GrabIngredient(ing)),
-            Ingredient::Flour => Ok(Command::GrabIngredient(ing)),
-            Ingredient::Cocoa => Ok(Command::GrabIngredient(ing)),
-            Ingredient::Sugar => Ok(Command::GrabIngredient(ing)),
-            _ => Err(Error::new(
-                ErrorKind::Other,
-                format!("Can't scoop {:?}", ing),
-            )),
-        }
+    pub fn scoop(self, ing: Ingredient) -> Result<RobotWith<PrepArea, Ingredient>, Error> {
+        let cmd = match ing.clone() {
+            ing @ Ingredient::Milk => Command::GrabIngredient(ing),
+            ing @ Ingredient::Flour => Command::GrabIngredient(ing),
+            ing @ Ingredient::Cocoa => Command::GrabIngredient(ing),
+            ing @ Ingredient::Sugar => Command::GrabIngredient(ing),
+            _ => {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    format!("Can't scoop {:?}", ing),
+                ))
+            }
+        };
+        RobotWith::new(self, ing)
     }
 }
 impl Location for RobotAt<PrepArea> {}
@@ -186,10 +190,10 @@ impl From<RobotAt<Pantry>> for RobotAt<PrepArea> {
 }
 
 impl RobotAt<Fridge> {
-    pub fn move_to_prep_area(self) -> Result<RobotAt<PrepArea>, Error> {
+    pub fn to_prep_area(self) -> Result<RobotAt<PrepArea>, Error> {
         Ok(self.into())
     }
-    pub fn move_to_pantry(self) -> Result<RobotAt<Pantry>, Error> {
+    pub fn to_pantry(self) -> Result<RobotAt<Pantry>, Error> {
         Ok(self.into())
     }
 }
@@ -213,15 +217,16 @@ impl From<RobotAt<PrepArea>> for RobotAt<Fridge> {
 }
 
 impl RobotAt<Pantry> {
-    pub fn move_to_prep_area(self) -> Result<RobotAt<PrepArea>, Error> {
+    pub fn to_prep_area(self) -> Result<RobotAt<PrepArea>, Error> {
         Ok(self.into())
     }
-    pub fn move_to_fridge(self) -> Result<RobotAt<Fridge>, Error> {
+    pub fn to_fridge(self) -> Result<RobotAt<Fridge>, Error> {
         Ok(self.into())
     }
 
-    pub fn load(&mut self, ing: Ingredient) -> Result<Command, Error> {
-        self.add_to_inventory(ing)
+    pub fn load(mut self, ing: Ingredient) -> Result<RobotAt<Pantry>, Error> {
+        self.add_to_inventory(ing)?;
+        Ok(self)
     }
 }
 impl Location for RobotAt<Pantry> {}
@@ -243,47 +248,74 @@ impl From<RobotAt<PrepArea>> for RobotAt<Pantry> {
     }
 }
 
-#[test]
-fn test_robot_at() {
-    let robot = <RobotAt<PrepArea>>::new();
-    let mut robot = robot.move_to_pantry().unwrap();
-    assert_eq!(0, robot.inventory_count(Ingredient::Butter));
+//#[test]
+// fn test_robot_at() {
+//     let robot = <RobotAt<PrepArea>>::new();
+//     let mut robot = robot.to_pantry().unwrap();
+//     assert_eq!(0, robot.inventory_count(Ingredient::Butter));
 
-    let cmd = robot.load(Ingredient::Butter).unwrap();
-    assert_eq!(1, robot.inventory_count(Ingredient::Butter));
-    assert_eq!(Command::TakeIngredient(Ingredient::Butter), cmd);
-    // to the prep area
-    let mut robot = robot.move_to_prep_area().unwrap();
-    let cmd = robot.unload(Ingredient::Butter).unwrap();
-    assert_eq!(0, robot.inventory_count(Ingredient::Butter));
-    assert_eq!(Command::RemoveIngredient(Ingredient::Butter), cmd);
+//     let cmd = robot.load(Ingredient::Butter).unwrap();
+//     assert_eq!(1, robot.inventory_count(Ingredient::Butter));
+//     assert_eq!(Command::TakeIngredient(Ingredient::Butter), cmd);
+//     // to the prep area
+//     let mut robot = robot.to_prep_area().unwrap();
+//     let cmd = robot.unload(Ingredient::Butter).unwrap();
+//     assert_eq!(0, robot.inventory_count(Ingredient::Butter));
+//     assert_eq!(Command::RemoveIngredient(Ingredient::Butter), cmd);
 
-    assert!(robot.unload(Ingredient::Butter).is_err());
-    assert_eq!(0, robot.inventory_count(Ingredient::Butter));
+//     assert!(robot.unload(Ingredient::Butter).is_err());
+//     assert_eq!(0, robot.inventory_count(Ingredient::Butter));
 
-    let cmd = robot.stir().unwrap();
-    assert_eq!(Command::Stir, cmd);
-}
+//     let cmd = robot.stir().unwrap();
+//     assert_eq!(Command::Stir, cmd);
+// }
 
 #[test]
 fn test_robot_at2() {
     let robot = <RobotAt<PrepArea>>::new();
-    let mut robot = robot.move_to_pantry().unwrap();
-    let _ = robot.load(Ingredient::Butter).unwrap();
-    let _ = robot.load(Ingredient::Eggs).unwrap();
-    let mut robot = robot.move_to_prep_area().unwrap();
+    let robot = robot.to_pantry().unwrap();
+    let robot = robot.load(Ingredient::Butter).unwrap();
+    let robot = robot.load(Ingredient::Eggs).unwrap();
+    let robot = robot.to_prep_area().unwrap();
 
-    let _ = robot.unload(Ingredient::Eggs).unwrap();
-    let _ = robot.unload(Ingredient::Butter).unwrap();
-    let _ = robot.stir().unwrap();
+    let robot = robot.unload(Ingredient::Eggs).unwrap();
+    let robot = robot.unload(Ingredient::Butter).unwrap();
+    let robot = robot.stir().unwrap();
 }
+#[test]
+fn test_fluent() -> Result<(), Error> {
+    use Ingredient::*;
 
-// #[test]
-// fn test_robot() {
-//     let robot = Robot::new();
-// }
+    let robot = <RobotAt<PrepArea>>::new();
+    let res = robot
+        .to_pantry()?
+        .load(Butter)?
+        .to_prep_area()?
+        .unload(Butter)?
+        .scoop(Milk)? // todo, this is an error state because there is no milk at the location.
+        .unscoop()?
+        .to_pantry()?;
+    Ok(())
+}
 
 struct Recipe {
     ingredients: Vec<InventoryItem>,
     steps: Vec<Command>,
+}
+
+#[derive(PartialEq, Debug)]
+struct RobotWith<L, I> {
+    robot_at: RobotAt<L>,
+    ingredient: I,
+}
+impl<L, I> RobotWith<L, I> {
+    fn new(robot_at: RobotAt<L>, ingredient: I) -> Result<RobotWith<L, I>, Error> {
+        Ok(RobotWith {
+            robot_at,
+            ingredient,
+        })
+    }
+    fn unscoop(self) -> Result<RobotAt<L>, Error> {
+        Ok(self.robot_at)
+    }
 }

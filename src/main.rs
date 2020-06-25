@@ -40,7 +40,6 @@ mod random;
 mod rc2;
 mod rc_arc;
 mod robot;
-mod robot_and_loc;
 mod robot_at;
 mod rust_book;
 mod satellite;

@@ -11,6 +11,8 @@
        regular commands.
     [] After it works, refactor to be more functional and less OO.
     [] Test that error results are as expected.
+
+    [] As a next level, add multiple robots, and operate them on threads, working with channels and coorperating to access the fridge and pantry.
 */
 use rand::seq::SliceRandom;
 use std::collections::{HashMap, HashSet};
