@@ -87,9 +87,9 @@ fn main() -> Result<(), std::io::Error> {
     // random::main();
     // grep::main();
     // mutex::main();
-    robot::main()
-    // robot_at::main()
-    // robot_and_loc::main()
+    robot::main()?;
+    robot_at::main()?;
+    Ok(())
 }
 // states::main()?;
 // channels::main()?;

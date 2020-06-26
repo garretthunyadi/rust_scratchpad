@@ -14,6 +14,10 @@
 
     [] As a next level, add multiple robots, and operate them on threads, working with channels and coorperating to access the fridge and pantry.
 */
+// #![warn(dead_code)]
+// #![warn(unused_variables)]
+// #![warn(unused_macros)]
+
 use rand::seq::SliceRandom;
 use std::collections::{HashMap, HashSet};
 use std::io::{Error, ErrorKind};

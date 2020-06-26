@@ -1,23 +1,33 @@
+// #![warn(dead_code)]
+// #![warn(unused_variables)]
+// #![warn(unused_macros)]
+
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind};
 use std::marker::PhantomData;
 
-fn error(msg: &str) -> Result<(), Error> {
-    Err(Error::new(ErrorKind::Other, msg))
+/*
+TODO
+  [] Use traits Grabbable, Location for trait bounds
+*/
+
+fn error(msg: String) -> Error {
+    Error::new(ErrorKind::Other, msg)
 }
 
 pub fn main() -> Result<(), Error> {
-    puts!("Robot");
+    puts!("RobotAt");
+    fluent_scenario()?;
     Ok(())
 }
 
 #[derive(PartialEq, Debug, Clone)]
 enum Command {
     Stir,
-    TakeIngredient(Ingredient),   // from local storage
-    RemoveIngredient(Ingredient), // from local storage
-    GrabIngredient(Ingredient),   // from prep area
-    ScoopIngredient(Ingredient),  // from prep area
+    TakeIngredient(Ingredient),           // from local storage
+    RemoveIngredient(Ingredient),         // from local storage
+    GrabIngredient(GrabbableIngredient),  // from prep area
+    ScoopIngredient(ScoopableIngredient), // from prep area
 }
 // #[derive(Hash, Eq, PartialEq, Debug)]
 // enum Location {
@@ -26,33 +36,93 @@ enum Command {
 //     PrepArea,
 // }
 
+trait Location {}
+
+// Obtainable means that we can obtain an ingrediant or a scoop/pan, but says nothing about how we obtain it.
+// The way that the robot works, though, we do care about the how.  The robot has a "grab" and a "scoop" command
+// that we work with.
+trait Obtainable {
+    // fn obtain(&self) -> Result<Command, Error>;
+}
+
+// this trait provides a specialization, where we care about how we obtain the obtainable.
+// it is appropriate to the robot's specific commands, specifically "grab" in this case.
+trait Grabbable: Obtainable {
+    fn grab(&self) -> Result<Command, Error>;
+    // fn obtain(&self) -> Result<Command, Error> {
+    //     self.grab()
+    // }
+}
+
+// this trait provides a specialization, where we care about how we obtain the obtainable.
+// it is appropriate to the robot's specific commands, specifically "scoop" in this case.
+trait Scoopable: Obtainable {
+    fn scoop(&self) -> Result<Command, Error>;
+    // fn obtain(&self) -> Result<Command, Error> {
+    //     self.scoop()
+    // }
+}
+
+#[derive(PartialEq, Debug, Clone)]
 struct Fridge {}
 impl Fridge {
     pub fn get_refrigerated_item(ing: Ingredient) -> Result<Command, Error> {
         Ok(Command::TakeIngredient(ing))
     }
 }
+impl Location for Fridge {}
 
+#[derive(PartialEq, Debug, Clone)]
 struct Pantry {}
 impl Pantry {
-    pub fn get_pantry_item(ing: Ingredient) -> Result<Command, Error> {
-        match ing {
-            Ingredient::Flour => Ok(Command::TakeIngredient(ing)),
-            Ingredient::Cocoa => Ok(Command::TakeIngredient(ing)),
-            Ingredient::Sugar => Ok(Command::TakeIngredient(ing)),
-            ing => Err(Error::new(
-                ErrorKind::Other,
-                format!("Can't get {:?} from pantry", ing),
-            )),
+    pub fn get_pantry_item(ingr: Ingredient) -> Result<Command, Error> {
+        use Ingredient::*;
+        match ingr {
+            ingr @ Flour | ingr @ Cocoa | ingr @ Sugar => Ok(Command::TakeIngredient(ingr)),
+            // ingr => Err(Error::new(
+            //     ErrorKind::Other,
+            //     format!("Can't get {:?} from pantry", ingr),
+            // ))
+            other => Err(error(format!("Can't get {:?} from pantry", other))),
         }
     }
 }
+impl Location for Pantry {}
 
+#[derive(PartialEq, Debug, Clone)]
 struct PrepArea {}
 impl PrepArea {
     // pub fn stir(&mut self) -> Result<Command, Error> {
     //     Ok(Command::Stir)
     // }
+}
+impl Location for PrepArea {}
+
+#[derive(Hash, Eq, PartialEq, Debug, Clone)]
+enum GrabbableIngredient {
+    Eggs,
+    Butter,
+}
+impl Obtainable for GrabbableIngredient {}
+impl Grabbable for GrabbableIngredient {
+    fn grab(&self) -> Result<Command, Error> {
+        Ok(Command::GrabIngredient(self.clone()))
+    }
+}
+
+#[derive(Hash, Eq, PartialEq, Debug, Clone)]
+enum ScoopableIngredient {
+    Milk,
+    Flour,
+    Cocoa,
+    Sugar,
+}
+
+impl Obtainable for ScoopableIngredient {}
+impl Scoopable for ScoopableIngredient {
+    fn scoop(&self) -> Result<Command, Error> {
+        Ok(Command::ScoopIngredient(self.clone()))
+    }
 }
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone)]
@@ -64,36 +134,25 @@ enum Ingredient {
     Cocoa,
     Sugar,
 }
+impl Obtainable for Ingredient {}
 
-// would need to make sifferent structs for this.
-// pub trait FridgeStorage {}
-// pub trait PantryStorage {}
+// TODO: I have Ingredients and Grabbable/Scoopable ingredients and the reporduce the items.  This isn't ideal.
 
 type InventoryItem = (Ingredient, u16);
 type Inventory = HashMap<Ingredient, u16>;
 
-trait Location {}
-
 // #[derive(PartialEq, Debug)]
-struct Robot {
-    location: &'static dyn Location,
-    inventory: Inventory,
-}
-// impl Robot {
-//     fn new() -> Robot {
-//         Robot {
-//             location: &<RobotAt<PrepArea>>::new(),
-//             inventory: HashMap::new(),
-//         }
-//     }
+// struct Robot {
+//     // location: &'static dyn Location,
+//     inventory: Inventory,
 // }
 
-#[derive(PartialEq, Debug)]
-struct RobotAt<L> {
+#[derive(PartialEq, Debug, Clone)]
+struct RobotAt<L: Location> {
     inventory: Inventory,
     phantom: PhantomData<L>,
 }
-impl<L> RobotAt<L> {
+impl<L: Location> RobotAt<L> {
     // private
     fn inventory_count(&self, ing: Ingredient) -> u16 {
         *self.inventory.get(&ing).or(Some(&0)).unwrap()
@@ -112,10 +171,7 @@ impl<L> RobotAt<L> {
             *count -= 1;
             Ok(Command::RemoveIngredient(ing))
         } else {
-            Err(Error::new(
-                ErrorKind::Other,
-                format!("Can't get {:?} from pantry", ing),
-            ))
+            Err(error(format!("Can't get {:?} from pantry", ing)))
         }
     }
 
@@ -145,33 +201,18 @@ impl RobotAt<PrepArea> {
     pub fn stir(self) -> Result<RobotAt<PrepArea>, Error> {
         Ok(self)
     }
-    pub fn grab(&mut self, ing: Ingredient) -> Result<Command, Error> {
-        match ing.clone() {
-            Ingredient::Eggs => Ok(Command::GrabIngredient(ing)),
-            Ingredient::Butter => Ok(Command::GrabIngredient(ing)),
-            _ => Err(Error::new(
-                ErrorKind::Other,
-                format!("Can't grab {:?}", ing),
-            )),
-        }
+    pub fn grab<G: Grabbable>(self, grabbable: G) -> Result<RobotWith<PrepArea, G>, Error> {
+        let cmd = &grabbable.grab()?;
+        // self.log(cmd); // TODO
+        Ok(RobotWith::new(self, grabbable))
     }
-    pub fn scoop(self, ing: Ingredient) -> Result<RobotWith<PrepArea, Ingredient>, Error> {
-        let cmd = match ing.clone() {
-            ing @ Ingredient::Milk => Command::GrabIngredient(ing),
-            ing @ Ingredient::Flour => Command::GrabIngredient(ing),
-            ing @ Ingredient::Cocoa => Command::GrabIngredient(ing),
-            ing @ Ingredient::Sugar => Command::GrabIngredient(ing),
-            _ => {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Can't scoop {:?}", ing),
-                ))
-            }
-        };
-        RobotWith::new(self, ing)
+    pub fn scoop<S: Scoopable>(self, scoopable: S) -> Result<RobotWith<PrepArea, S>, Error> {
+        let cmd = &scoopable.scoop()?;
+        // self.log(cmd); // TODO
+        Ok(RobotWith::new(self, scoopable))
     }
 }
-impl Location for RobotAt<PrepArea> {}
+// impl Location for RobotAt<PrepArea> {}
 impl From<RobotAt<Fridge>> for RobotAt<PrepArea> {
     fn from(curr: RobotAt<Fridge>) -> RobotAt<PrepArea> {
         RobotAt {
@@ -197,7 +238,7 @@ impl RobotAt<Fridge> {
         Ok(self.into())
     }
 }
-impl Location for RobotAt<Fridge> {}
+// impl Location for RobotAt<Fridge> {}
 
 impl From<RobotAt<Pantry>> for RobotAt<Fridge> {
     fn from(curr: RobotAt<Pantry>) -> RobotAt<Fridge> {
@@ -229,7 +270,7 @@ impl RobotAt<Pantry> {
         Ok(self)
     }
 }
-impl Location for RobotAt<Pantry> {}
+// impl Location for RobotAt<Pantry> {}
 
 impl From<RobotAt<Fridge>> for RobotAt<Pantry> {
     fn from(curr: RobotAt<Fridge>) -> RobotAt<Pantry> {
@@ -248,27 +289,33 @@ impl From<RobotAt<PrepArea>> for RobotAt<Pantry> {
     }
 }
 
-//#[test]
-// fn test_robot_at() {
-//     let robot = <RobotAt<PrepArea>>::new();
-//     let mut robot = robot.to_pantry().unwrap();
-//     assert_eq!(0, robot.inventory_count(Ingredient::Butter));
+#[test]
+fn test_robot_at() {
+    let robot = <RobotAt<PrepArea>>::new();
+    let robot = robot.to_pantry().unwrap();
+    assert_eq!(0, robot.inventory_count(Ingredient::Butter));
 
-//     let cmd = robot.load(Ingredient::Butter).unwrap();
-//     assert_eq!(1, robot.inventory_count(Ingredient::Butter));
-//     assert_eq!(Command::TakeIngredient(Ingredient::Butter), cmd);
-//     // to the prep area
-//     let mut robot = robot.to_prep_area().unwrap();
-//     let cmd = robot.unload(Ingredient::Butter).unwrap();
-//     assert_eq!(0, robot.inventory_count(Ingredient::Butter));
-//     assert_eq!(Command::RemoveIngredient(Ingredient::Butter), cmd);
+    let robot = robot.load(Ingredient::Butter).unwrap();
+    // let cmd = robot.
+    assert_eq!(1, robot.inventory_count(Ingredient::Butter));
+    // assert_eq!(Command::TakeIngredient(Ingredient::Butter), cmd);
+    // cmd =
+    // to the prep area
+    let robot = robot.to_prep_area().unwrap();
+    let robot = robot.unload(Ingredient::Butter).unwrap();
+    assert_eq!(0, robot.inventory_count(Ingredient::Butter));
+    // assert_eq!(
+    //     Command::RemoveIngredient(Ingredient::Butter),
+    //     robot.commands().last()
+    // );
 
-//     assert!(robot.unload(Ingredient::Butter).is_err());
-//     assert_eq!(0, robot.inventory_count(Ingredient::Butter));
+    // TODO: this fails because this version hasn't implemented the inventory counts
+    // assert!(robot.clone().unload(Ingredient::Butter).is_err());
+    assert_eq!(0, robot.inventory_count(Ingredient::Butter));
 
-//     let cmd = robot.stir().unwrap();
-//     assert_eq!(Command::Stir, cmd);
-// }
+    let robot = robot.stir().unwrap();
+    // assert_eq!(Command::Stir, cmd);
+}
 
 #[test]
 fn test_robot_at2() {
@@ -283,7 +330,11 @@ fn test_robot_at2() {
     let robot = robot.stir().unwrap();
 }
 #[test]
-fn test_fluent() -> Result<(), Error> {
+fn test_fluent_scenario() -> Result<(), Error> {
+    fluent_scenario()
+}
+
+fn fluent_scenario() -> Result<(), Error> {
     use Ingredient::*;
 
     let robot = <RobotAt<PrepArea>>::new();
@@ -292,28 +343,20 @@ fn test_fluent() -> Result<(), Error> {
         .load(Butter)?
         .to_prep_area()?
         .unload(Butter)?
-        .scoop(Milk)? // todo, this is an error state because there is no milk at the location.
+        .scoop(ScoopableIngredient::Milk)? // todo, this is an error state because there is no milk at the location.
         .unscoop()?
         .to_pantry()?;
     Ok(())
 }
 
-struct Recipe {
-    ingredients: Vec<InventoryItem>,
-    steps: Vec<Command>,
-}
-
 #[derive(PartialEq, Debug)]
-struct RobotWith<L, I> {
+struct RobotWith<L: Location, O: Obtainable> {
     robot_at: RobotAt<L>,
-    ingredient: I,
+    item: O,
 }
-impl<L, I> RobotWith<L, I> {
-    fn new(robot_at: RobotAt<L>, ingredient: I) -> Result<RobotWith<L, I>, Error> {
-        Ok(RobotWith {
-            robot_at,
-            ingredient,
-        })
+impl<L: Location, O: Obtainable> RobotWith<L, O> {
+    fn new(robot_at: RobotAt<L>, item: O) -> RobotWith<L, O> {
+        RobotWith { robot_at, item }
     }
     fn unscoop(self) -> Result<RobotAt<L>, Error> {
         Ok(self.robot_at)
