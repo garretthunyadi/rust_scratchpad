@@ -14,17 +14,24 @@
 
     [] As a next level, add multiple robots, and operate them on threads, working with channels and coorperating to access the fridge and pantry.
 */
-// #![warn(dead_code)]
-// #![warn(unused_variables)]
-// #![warn(unused_macros)]
+#![warn(dead_code)]
+#![warn(unused_variables)]
+#![warn(unused_macros)]
 
 use rand::seq::SliceRandom;
 use std::collections::{HashMap, HashSet};
 use std::io::{Error, ErrorKind};
 
-fn error(msg: &str) -> Result<(), Error> {
-    Err(Error::new(ErrorKind::Other, msg))
+macro_rules! err {
+    ($($arg:tt)*) => {
+        Err(Error::new(ErrorKind::Other, format!($($arg)*)))
+    };
 }
+
+// ($($arg:tt)*) => {{
+//     let res = $crate::fmt::format($crate::__export::format_args!($($arg)*));
+//     res
+// }}
 
 pub fn main() -> Result<(), Error> {
     puts!("Robot");
@@ -395,13 +402,11 @@ impl Robot {
             | (Pantry, Flour)
             | (Pantry, Cocoa)
             | (Pantry, Sugar) => Ok(Command::LoadUp(ingr.clone())),
-            (_, _) => Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "Invalid location/item combo: {:?}/{:?}",
-                    self.location, ingr
-                ),
-            )),
+            (_, _) => err!(
+                "Invalid location/item combo: {:?}/{:?}",
+                self.location,
+                ingr
+            ),
         }
     }
 
@@ -409,10 +414,7 @@ impl Robot {
         if self.location == Location::PrepArea {
             Ok(Command::Unload(ingr))
         } else {
-            Err(Error::new(
-                ErrorKind::Other,
-                format!("Cannot unload away from : {:?}/{:?}", self.location, ingr),
-            ))
+            err!("Cannot unload away from : {:?}/{:?}", self.location, ingr)
         }
     }
 
@@ -473,16 +475,10 @@ impl Robot {
                     self.holding = Some(Holdable::Ingredient(ingr.clone()));
                     Ok(Command::Grab(ingr.clone()))
                 } else {
-                    Err(Error::new(
-                        ErrorKind::Other,
-                        format!("Can't grab {:?} because there is none nearby", ingr),
-                    ))
+                    err!("Can't grab {:?} because there is none nearby", ingr)
                 }
             }
-            _ => Err(Error::new(
-                ErrorKind::Other,
-                format!("Can't grab {:?}", ingr),
-            )),
+            _ => err!("Can't grab {:?}", ingr),
         }
     }
     pub fn squeeze(&mut self) -> Result<Command, Error> {
@@ -508,47 +504,30 @@ impl Robot {
                         self.holding = Some(Holdable::Scoop(Some(ingr.clone())));
                         Ok(Command::Scoop(ingr.clone()))
                     } else {
-                        Err(Error::new(
-                            ErrorKind::Other,
-                            format!("Can't scoop {:?} because there is none nearby", ingr),
-                        ))
+                        err!("Can't scoop {:?} because there is none nearby", ingr)
                     }
                 }
-                _ => Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Can't scoop {:?}", ingr),
-                )),
+                _ => err!("Can't scoop {:?}", ingr),
             },
             None => {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Can't scoop {:?} because I'm not holding my scoop", ingr),
-                ));
+                return err!("Can't scoop {:?} because I'm not holding my scoop", ingr);
             }
             Some(Holdable::Ingredient(held_ingr)) => {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Can't scoop {:?} because I'm holding {:?}", ingr, held_ingr),
-                ));
+                return err!("Can't scoop {:?} because I'm holding {:?}", ingr, held_ingr);
             }
             Some(Holdable::Scoop(Some(ingr_in_scoop))) => {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    format!(
-                        "Can't scoop {:?} because my scoop has some {:?}",
-                        ingr, ingr_in_scoop
-                    ),
-                ));
+                return err!(
+                    "Can't scoop {:?} because my scoop has some {:?}",
+                    ingr,
+                    ingr_in_scoop
+                );
             }
         }
     }
     pub fn add_to_bowl(&mut self) -> Result<Command, Error> {
         match self.holding {
             None => {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Can't add to bowl because I'm not holding anything"),
-                ));
+                return err!("Can't add to bowl because I'm not holding anything");
             }
             Some(_) => Ok(Command::AddToBowl),
         }
@@ -573,12 +552,7 @@ impl Robot {
     pub fn grab_scoop(&mut self) -> Result<Command, Error> {
         match self.holding.clone() {
             None => self.holding = Some(Holdable::Scoop(None)),
-            Some(x) => {
-                return Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Can't grab scoop because I'm holding {:?}", x),
-                ))
-            }
+            Some(x) => return err!("Can't grab scoop because I'm holding {:?}", x),
         }
         Ok(Command::GrabScoop)
     }
@@ -690,10 +664,3 @@ fn test_orders() {
     println!("\nRECEIPTS: {:?}", receipts);
     println!("\nLOG: {:?}", robot.log);
 }
-
-// This didn't work immediately, but I should come back to it
-// impl From<Command> for Vec<Command> {
-//     fn from(cmd: Command) -> Self {
-//         vec![cmd]
-//     }
-// }
